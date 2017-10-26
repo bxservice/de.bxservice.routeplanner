@@ -11,6 +11,7 @@ import org.compiere.model.MBPartnerLocation;
 import org.compiere.model.MLocation;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 public class RoutePlanner_Callouts implements IColumnCalloutFactory {
@@ -45,19 +46,44 @@ public class RoutePlanner_Callouts implements IColumnCalloutFactory {
 			int C_BPartner_Location_ID = ((Integer) value).intValue();
 
 			MBPartnerLocation bPartnerLocation = new MBPartnerLocation(ctx, C_BPartner_Location_ID, null);
-			MLocation location = bPartnerLocation.getLocation(true);
-
-			final String whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=?";
-			X_BAY_RoutePlan routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
-					.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx)})
-					.firstOnly();
+			int bpartnerRouteId = 0;
 			
-			if (routePlan != null) {
-				X_BAY_Route route = new X_BAY_Route(ctx, routePlan.getBAY_Route_ID(),null);
-				mTab.setValue("Bay_route_id", route.getBAY_Route_ID());
-				log.info("Route " + route.getName() + " assigned");
+			if (bPartnerLocation.get_Value("BAY_Route_ID") != null) {
+				log.info("Default route for BPartner assigned");
+				bpartnerRouteId = (int) bPartnerLocation.get_Value("BAY_Route_ID");
+			} else {
+				MLocation location = bPartnerLocation.getLocation(true);
+
+				//Return the closest date in the same week that a route will be delivered to the postal code
+				String whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? AND weekday::integer >= EXTRACT(ISODOW from ?::date)";
+				X_BAY_RoutePlan routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
+						.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx), DB.TO_STRING(mTab.getField("DatePromised").getValue().toString())})
+						.setOrderBy(X_BAY_RoutePlan.COLUMNNAME_WeekDay)
+						.first();
+				
+				if (routePlan != null) {
+					X_BAY_Route route = new X_BAY_Route(ctx, routePlan.getBAY_Route_ID(),null);
+					bpartnerRouteId = route.getBAY_Route_ID();
+				} else {
+					log.info("No route is going to this address in the rest of the week");
+
+					whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? ";
+					routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
+							.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx)})
+							.setOrderBy(X_BAY_RoutePlan.COLUMNNAME_WeekDay)
+							.first();
+					if (routePlan != null) {
+						X_BAY_Route route = new X_BAY_Route(ctx, routePlan.getBAY_Route_ID(),null);
+						bpartnerRouteId = route.getBAY_Route_ID();
+					}
+				}
+			}
+			
+			if (bpartnerRouteId != 0) {
+				mTab.setValue("Bay_route_id", bpartnerRouteId);
+				log.info("Route " + bpartnerRouteId + " assigned");
 			} else 
-				log.info("No route found for this location, assign it manually");
+				log.info("No route found for this location, assign it manually");				
 			
 			return "";
 		}

@@ -24,14 +24,14 @@ import org.compiere.model.*;
 
 /** Generated Model for BAY_Delivery
  *  @author iDempiere (generated) 
- *  @version Release 4.1 - $Id$ */
+ *  @version Release 5.1 - $Id$ */
 public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20171019L;
+	private static final long serialVersionUID = 20171108L;
 
     /** Standard Constructor */
     public X_BAY_Delivery (Properties ctx, int BAY_Delivery_ID, String trxName)
@@ -41,6 +41,7 @@ public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent
         {
 			setBAY_Delivery_ID (0);
 			setBAY_Driver_ID (0);
+			setBAY_Truck_ID (0);
         } */
     }
 
@@ -71,34 +72,6 @@ public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent
         .append(get_ID()).append("]");
       return sb.toString();
     }
-
-	public org.compiere.model.I_A_Asset getA_Asset() throws RuntimeException
-    {
-		return (org.compiere.model.I_A_Asset)MTable.get(getCtx(), org.compiere.model.I_A_Asset.Table_Name)
-			.getPO(getA_Asset_ID(), get_TrxName());	}
-
-	/** Set Asset.
-		@param A_Asset_ID 
-		Asset used internally or by customers
-	  */
-	public void setA_Asset_ID (int A_Asset_ID)
-	{
-		if (A_Asset_ID < 1) 
-			set_Value (COLUMNNAME_A_Asset_ID, null);
-		else 
-			set_Value (COLUMNNAME_A_Asset_ID, Integer.valueOf(A_Asset_ID));
-	}
-
-	/** Get Asset.
-		@return Asset used internally or by customers
-	  */
-	public int getA_Asset_ID () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_A_Asset_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
 
 	public org.compiere.model.I_S_Resource getBAY_CoDriver() throws RuntimeException
     {
@@ -218,6 +191,31 @@ public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent
 	public int getBAY_Route_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_BAY_Route_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public org.compiere.model.I_S_Resource getBAY_Truck() throws RuntimeException
+    {
+		return (org.compiere.model.I_S_Resource)MTable.get(getCtx(), org.compiere.model.I_S_Resource.Table_Name)
+			.getPO(getBAY_Truck_ID(), get_TrxName());	}
+
+	/** Set Bay Truck.
+		@param BAY_Truck_ID Bay Truck	  */
+	public void setBAY_Truck_ID (int BAY_Truck_ID)
+	{
+		if (BAY_Truck_ID < 1) 
+			set_Value (COLUMNNAME_BAY_Truck_ID, null);
+		else 
+			set_Value (COLUMNNAME_BAY_Truck_ID, Integer.valueOf(BAY_Truck_ID));
+	}
+
+	/** Get Bay Truck.
+		@return Bay Truck	  */
+	public int getBAY_Truck_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_BAY_Truck_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

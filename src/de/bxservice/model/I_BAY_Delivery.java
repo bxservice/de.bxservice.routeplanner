@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for BAY_Delivery
  *  @author iDempiere (generated) 
- *  @version Release 4.1
+ *  @version Release 5.1
  */
 @SuppressWarnings("all")
 public interface I_BAY_Delivery 
@@ -42,21 +42,6 @@ public interface I_BAY_Delivery
     BigDecimal accessLevel = BigDecimal.valueOf(3);
 
     /** Load Meta Data */
-
-    /** Column name A_Asset_ID */
-    public static final String COLUMNNAME_A_Asset_ID = "A_Asset_ID";
-
-	/** Set Asset.
-	  * Asset used internally or by customers
-	  */
-	public void setA_Asset_ID (int A_Asset_ID);
-
-	/** Get Asset.
-	  * Asset used internally or by customers
-	  */
-	public int getA_Asset_ID();
-
-	public org.compiere.model.I_A_Asset getA_Asset() throws RuntimeException;
 
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
@@ -138,6 +123,17 @@ public interface I_BAY_Delivery
 	public int getBAY_Route_ID();
 
 	public I_BAY_Route getBAY_Route() throws RuntimeException;
+
+    /** Column name BAY_Truck_ID */
+    public static final String COLUMNNAME_BAY_Truck_ID = "BAY_Truck_ID";
+
+	/** Set Bay Truck	  */
+	public void setBAY_Truck_ID (int BAY_Truck_ID);
+
+	/** Get Bay Truck	  */
+	public int getBAY_Truck_ID();
+
+	public org.compiere.model.I_S_Resource getBAY_Truck() throws RuntimeException;
 
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";

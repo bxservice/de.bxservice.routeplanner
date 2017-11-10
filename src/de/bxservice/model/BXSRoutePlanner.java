@@ -1,134 +1,96 @@
 package de.bxservice.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.compiere.model.MResource;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
 
 public class BXSRoutePlanner {
 
-	private List<BXSPlannerColumn> routePlannerColumns = null;
-	private List<BXSTruck> trucks = null;
-	private List<BXSDriver> drivers = null;
-	private int numberOfDrivers = 0;
+	private List<MRoute> routes;
+	private List<BXSTransportationResource> resources;
+	private Map<MRoute, List<BXSTransportationResource>> routeResources = new HashMap<>();
 
 	public BXSRoutePlanner() {
-		getPlannerColumns();
-		getDrivers();
-		setTruckDrivers();
-		setDriversColumns();
+		getRoutes();
+		getCards();
+		setRouteResources();
 	}
 
 	public int getNumberOfColumns() {
-		if (routePlannerColumns == null)
-			routePlannerColumns = getPlannerColumns();
-		return routePlannerColumns.size();
+		if (routes == null)
+			routes = getRoutes();
+		return routes.size();
 	}
 
-	public List<BXSPlannerColumn> getPlannerColumns() {
+	public List<MRoute> getRoutes() {
+
+		if (routes != null && !routes.isEmpty())
+			return routes;
+
+		routes = new Query(Env.getCtx(), MRoute.Table_Name, " AD_Client_ID IN (0, ?) ", null)
+				.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx())})
+				.setOnlyActiveRecords(true)
+				.setOrderBy(MRoute.COLUMNNAME_Value)
+				.list();
+
+		for (MRoute route : routes)
+			routeResources.put(route, new ArrayList<>());
 		
-		if (routePlannerColumns != null && !routePlannerColumns.isEmpty())
-			return routePlannerColumns;
+		return routes;
+	}
 
-		routePlannerColumns = new ArrayList<>();
-		//Create first two special columns - Available and Unavailable
-		BXSPlannerColumn plannerColumn = new BXSPlannerColumn();
-		plannerColumn.setName("Unavailable");
-		routePlannerColumns.add(plannerColumn);
+	public List<BXSTransportationResource> getCards() {
+		if (resources == null) 
+			resources = BXSTransportationResource.getTResources();
 
-		plannerColumn = new BXSPlannerColumn();
-		plannerColumn.setAvailable(true);
-		plannerColumn.setName("Available");
-		routePlannerColumns.add(plannerColumn);
+		return resources;
+	}
 
-		for (BXSTruck truck : getTrucks()) {
-			plannerColumn = new BXSPlannerColumn();
-			plannerColumn.setTruck(truck);
-			routePlannerColumns.add(plannerColumn);
+	public int getNumberOfCards() {
+		if (resources == null)
+			getCards();
+		return  resources.size();
+	}
+	
+	private void setRouteResources() {
+		
+		for (BXSTransportationResource resource : resources) {
+			MRoute route = getRoute(resource);
+			routeResources.get(route).add(resource);
 		}
-
-		return routePlannerColumns;
 	}
-
-	public List<BXSTruck> getTrucks() {
-
-		if (trucks == null) {
-			trucks = new ArrayList<>();
-			List<MResource> resources = new Query(Env.getCtx(), MResource.Table_Name, " AD_Client_ID IN (0, ?) AND S_ResourceType_ID=?", null)
-					.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx()), BXSTruck.S_ResourceType_ID})
-					.setOnlyActiveRecords(true)
-					.setOrderBy(MResource.COLUMNNAME_Name)
-					.list();
-
-			for (MResource res : resources)
-				trucks.add(new BXSTruck(res));
-		}
-
-		return trucks;
-	}
-
-	public int getNumberOfDrivers() {
-		if (numberOfDrivers <= 0)
-			getDrivers();
-		numberOfDrivers = drivers.size();
-		return numberOfDrivers;
-	}
-
-	public List<BXSDriver> getDrivers() {
-		if (drivers == null) {
-			drivers = new ArrayList<>();
-
-			List<MResource> resources = new Query(Env.getCtx(), MResource.Table_Name, " AD_Client_ID IN (0, ?) AND S_ResourceType_ID=?", null)
-					.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx()), BXSDriver.S_ResourceType_ID})
-					.setOnlyActiveRecords(true)
-					.setOrderBy(MResource.COLUMNNAME_Name)
-					.list();
-
-			for (MResource res : resources) {
-				drivers.add(new BXSDriver(res));
+	
+	private MRoute getRoute(BXSTransportationResource resource) {
+		for (MRoute route : getRoutes()) {
+			if (!resource.isAvailable() && route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
+				return route;
+			} else if (resource.isAvailable()) {
+				if (resource.getDelivery() == null && route.getValue().equals(MRoute.AVAILABLE_VALUE))
+					return route;
+				else if (resource.getDelivery() != null && 
+						resource.getDelivery().getBAY_Route_ID() == route.getBAY_Route_ID())
+					return route;
 			}
 		}
-
-		return drivers;
+		
+		return null;
 	}
-
-	private void setDriversColumns() {
-
-		for (BXSPlannerColumn column : getPlannerColumns()) {
-			for (BXSDriver driver : getDrivers()) {
-				if (driver.getAssignedTruck() == null) {
-					if (column.getTruck() == null && 
-							driver.isAvailable() == column.isAvailable()) {
-						driver.setAsociatedColumn(column);
-						column.addRecord(driver);
-					}
-				} else if (column.getTruck() != null && driver.getAssignedTruck().getTruckID() == 
-						column.getTruck().getTruckID()) {
-					driver.setAsociatedColumn(column);
-					column.addRecord(driver);
-				}
-			}
-		}
+	
+	public boolean hasMoreCards(MRoute route) {
+		return !routeResources.get(route).isEmpty();	
 	}
-
-	private void setTruckDrivers() {
-
-		for (BXSTruck truck : getTrucks()) {
-			for (BXSDriver driver : getDrivers()) {
-				if (truck.getTruckID() == driver.getBAY_Truck_ID()) {
-					driver.setAssignedTruck(truck);
-					if (driver.isCoDriver())
-						truck.setCoDriver(driver);
-					else
-						truck.setDriver(driver);
-				}
-			}
-		}
+	
+	public BXSTransportationResource getRecord(MRoute route) {
+		BXSTransportationResource record = routeResources.get(route).get(0);
+		routeResources.get(route).remove(record);
+		return record;
 	}
-
-	public boolean changeColumn(BXSPlannerColumn endColumn, BXSDriver driver) {
+	
+	/*	public boolean changeColumn(BXSPlannerColumn endColumn, BXSDriver driver) {
 
 		boolean success = true;
 
@@ -142,11 +104,23 @@ public class BXSRoutePlanner {
 				truckDelivery.setBAY_Truck_ID(endColumn.getTruck().getTruckID());
 			}
 
-			success = truckDelivery.set_ValueOfColumnReturningBoolean(X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID, driver.getResource().getS_Resource_ID());
+			String columnName = null;
+			if (truckDelivery.getBAY_Driver_ID() == 0) {
+				columnName = X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID;
+			} else {
+				columnName = X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID;
+			}
+			success = truckDelivery.set_ValueOfColumnReturningBoolean(columnName, driver.getResource().getS_Resource_ID());
 			truckDelivery.saveEx();
 
 			if (driverDelivery != null) {
-				driverDelivery.set_ValueOfColumnReturningBoolean(X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID, null);
+				columnName = null;
+				if (!driver.isCoDriver()) {
+					columnName = X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID;
+				} else {
+					columnName = X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID;
+				}
+				driverDelivery.set_ValueOfColumnReturningBoolean(columnName, null);
 				driverDelivery.saveEx();
 			}
 		} else {
@@ -159,5 +133,5 @@ public class BXSRoutePlanner {
 		}
 
 		return success;
-	}
+	}*/
 }

@@ -44,6 +44,11 @@ import de.bxservice.model.MRoute;
 public class WRoutePlanner extends RoutePlanner 
 	implements IFormController, EventListener<Event>, ValueChangeListener {
 
+	private static final String RESOURCE_TYPE = "RESOURCE_TYPE";
+	private static final String TRUCK_CELL    = "TRUCK_CELL";
+	private static final String DRIVER_CELL   = "DRIVER_CELL";
+	private static final String CODRIVER_CELL = "CODRIVER_CELL";
+	
 	private CustomForm mainForm = new CustomForm();
 
 	private Borderlayout mainLayout	= new Borderlayout();
@@ -197,7 +202,7 @@ public class WRoutePlanner extends RoutePlanner
 						}						
 					}
 					if (title != null) 
-						createEmptyCardCell(row, title);
+						createEmptyCardCell(row, route, title, rowNo);
 					else 
 						createEmptyCell(row, route);
 				} else {
@@ -225,11 +230,11 @@ public class WRoutePlanner extends RoutePlanner
 		setCellProps(row.getLastCell(), resource);
 	}
 	
-	private void createEmptyCardCell(Row row, String title) {
+	private void createEmptyCardCell(Row row, MRoute column, String title, int rowNo) {
 		Label label = new Label(title);
 		label.setStyle("display: inline;");
 		row.appendCellChild(label);
-		setEmptyCellProps(row.getLastCell());
+		setEmptyCellProps(row.getLastCell(), column, rowNo);
 	}
 
 	private Vlayout createCell(BXSTransportationResource resource) {
@@ -249,10 +254,22 @@ public class WRoutePlanner extends RoutePlanner
 		return div;
 	}//CreateCell
 	
-	private void setEmptyCellProps(Cell cell) {
+	private void setEmptyCellProps(Cell cell, MRoute column, int rowNo) {
 		cell.setDroppable("true");
 		cell.addEventListener(Events.ON_DROP, this);
 		cell.setStyle("text-align: center; border-style: inset;");
+		mapEmptyCellField.put(cell, column);
+
+		switch (rowNo) {
+		case 1:
+			cell.setAttribute(RESOURCE_TYPE, TRUCK_CELL);
+			break;
+		case 2:
+			cell.setAttribute(RESOURCE_TYPE, DRIVER_CELL);
+			break;
+		case 3:
+			cell.setAttribute(RESOURCE_TYPE, CODRIVER_CELL);
+		}
 	}
 
 	private void setCellProps(Cell cell, BXSTransportationResource resource) {
@@ -304,6 +321,8 @@ public class WRoutePlanner extends RoutePlanner
 			Cell endItem = null;
 			if (me.getTarget() instanceof Cell) {
 				endItem = (Cell) me.getTarget();
+				
+				System.out.println(endItem.getAttribute(RESOURCE_TYPE));
 
 				/*BXSDriver selectedDriver = mapCellCards.get(startItem);
 				BXSPlannerColumn startColumn = selectedDriver.getAsociatedColumn();

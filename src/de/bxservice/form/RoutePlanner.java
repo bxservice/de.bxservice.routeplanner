@@ -2,9 +2,9 @@ package de.bxservice.form;
 
 import java.util.List;
 
-import de.bxservice.model.BXSDriver;
-import de.bxservice.model.BXSPlannerColumn;
 import de.bxservice.model.BXSRoutePlanner;
+import de.bxservice.model.BXSTransportationResource;
+import de.bxservice.model.MRoute;
 
 public class RoutePlanner {
 
@@ -18,23 +18,31 @@ public class RoutePlanner {
 		routePlanner = null;
 	}
 	
-	public List<BXSPlannerColumn> getColumns() {
-		return routePlanner.getPlannerColumns();
+	public List<MRoute> getRoutes() {
+		return routePlanner.getRoutes();
 	}
 	
 	public int getNumberOfColumns() {
 		return routePlanner.getNumberOfColumns();
 	}
 	
-	public int getNumberOfDrivers() {
-		return routePlanner.getNumberOfDrivers();
+	public int getNumberOfCards() {
+		return routePlanner.getNumberOfCards();
 	}
 	
-	public List<BXSDriver> getDrivers() {
-		return routePlanner.getDrivers();
+	public List<BXSTransportationResource> getCards() {
+		return routePlanner.getCards();
 	}
 	
-	public boolean swapCard(BXSPlannerColumn startColumn, BXSPlannerColumn endColumn, BXSDriver driver) {
+	public boolean hasMoreCards(MRoute route) {
+		return routePlanner.hasMoreCards(route);
+	}
+	
+	public BXSTransportationResource getRecord(MRoute route) {
+		return routePlanner.getRecord(route);
+	}
+	
+	/*public boolean swapCard(BXSPlannerColumn startColumn, BXSPlannerColumn endColumn, BXSDriver driver) {
 
 		boolean columnChanged = routePlanner.changeColumn(endColumn, driver);
 		if (columnChanged) {
@@ -43,5 +51,5 @@ public class RoutePlanner {
 			driver.setAsociatedColumn(endColumn);
 		}
 		return columnChanged;
-	}
+	}*/
 }

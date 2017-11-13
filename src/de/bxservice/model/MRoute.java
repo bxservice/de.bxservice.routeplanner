@@ -41,7 +41,6 @@ public class MRoute extends X_BAY_Route {
 				.first();
 		
 		if (delivery == null) {
-			//TODO: copy last record
 			delivery = new MDelivery(Env.getCtx(), 0, null);
 			delivery.setBAY_Route_ID(getBAY_Route_ID());
 			delivery.setBAY_RouteDate(date);

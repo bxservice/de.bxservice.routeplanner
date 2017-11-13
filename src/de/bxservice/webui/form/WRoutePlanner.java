@@ -1,8 +1,14 @@
 package de.bxservice.webui.form;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.imageio.ImageIO;
 
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
@@ -23,9 +29,12 @@ import org.adempiere.webui.panel.CustomForm;
 import org.adempiere.webui.panel.IFormController;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
+import org.compiere.model.MImage;
 import org.compiere.model.MResource;
+import org.compiere.model.MUser;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.zkoss.image.AImage;
 import org.zkoss.zk.ui.event.DropEvent;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -35,6 +44,8 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.Column;
 import org.zkoss.zul.Columns;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Hlayout;
+import org.zkoss.zul.Image;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
@@ -88,11 +99,10 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	}
 
 	private void jbInit() {
-		mainForm.setSizable(true);
 		mainForm.setClosable(true);
 		mainForm.setMaximizable(true);
-		mainForm.setWidth("95%");
-		mainForm.setHeight("95%");
+		mainForm.setWidth("100%");
+		mainForm.setHeight("100%");
 		mainForm.appendChild(mainLayout);
 		mainForm.setBorder("normal");
 
@@ -150,7 +160,6 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		routePanel = new Grid();
 		routePanel.makeNoStrip();
 		routePanel.setVflex(true);
-		routePanel.setSizedByContent(true);
 		routePanel.setSpan("true");
 
 		int numCols=0;
@@ -162,12 +171,10 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 			Columns columns = new Columns();
 			columns.setMenupopup("auto");
 
-			int equalWidth = 100 ;
-
 			Column  column;
 			for (MRoute route : getRoutes()) {
 				column = new Column();
-				column.setWidth(equalWidth + "%");
+				column.setHflex("1");
 				column.addEventListener(Events.ON_DOUBLE_CLICK, this);
 				mapColumnRoute.put(column, route);
 
@@ -223,6 +230,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 			}
 			rows.appendChild(row);
 			row=new Row();
+			row.setHeight("100px");
 		}
 	}//createRows
 
@@ -257,7 +265,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	}
 
 	private void createCardCell(Row row, BXSTransportationResource resource) {
-		Vlayout l = createCell(resource);
+		Hlayout l = createCell(resource);
 		row.appendCellChild(l);
 		setCellProps(row.getLastCell(), resource);
 	}
@@ -269,8 +277,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		setEmptyCellProps(row.getLastCell(), column, rowNo);
 	}
 
-	private Vlayout createCell(BXSTransportationResource resource) {
-		Vlayout div = new Vlayout();		
+	private Hlayout createCell(BXSTransportationResource resource) {
+		Hlayout div = new Hlayout();
+		Vlayout vlayout = new Vlayout();		
 		StringBuilder divStyle = new StringBuilder();
 
 		divStyle.append("padding-left: 4px; text-align: left; cursor:pointer;");
@@ -278,13 +287,62 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 			divStyle.append("background-color: red;");
 
 		div.setStyle(divStyle.toString());
+		
+		//Left side - labels
 		Label label = new Label(resource.getName());
-		div.appendChild(label);
+		vlayout.appendChild(label);
+		label.setVflex("1");
 		label = new Label(resource.getDescription());
-		div.appendChild(label);
+		label.setVflex("1");
+		vlayout.appendChild(label);
+		vlayout.setHflex("1");
+		vlayout.setVflex("1");
 
+		div.appendChild(vlayout);
+		
+		// Right panel - image
+		Image imageDiv = new Image();
+		String imageName = null;
+		
+		if (resource.isTruck()) {
+			imageName = "delivery-truck.png";
+		} else if (resource.getResource().getAD_User() != null) {
+			MUser user = (MUser) resource.getResource().getAD_User();
+			MImage userImage = MImage.get(Env.getCtx(), user.getAD_Image_ID());
+			if (userImage != null && userImage.getData() != null) {
+				AImage aImage;
+				try {
+					aImage = new AImage(userImage.getName(), userImage.getData());
+					imageDiv.setContent(aImage);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}				
+			}
+		}
+		
+		if (imageDiv.getContent() == null) {
+			try {
+				if (imageName == null)
+					imageName = "delivery-man.png";
+
+				URL imageURL = getClass().getClassLoader().getResource("images/" + imageName);
+				BufferedImage originalImage = ImageIO.read(imageURL);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ImageIO.write(originalImage, "png", baos);
+				AImage aImage = new AImage(imageName, baos.toByteArray());
+				imageDiv.setContent(aImage);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}			
+			//imageDiv.setSrc(getClass().getClassLoader().getResource("images/delivery-man.png").toString());
+		}
+		imageDiv.setWidth("75px");
+		imageDiv.setHeight("75px");
+
+		div.appendChild(imageDiv);
+		
 		return div;
-	}//CreateCell
+	} //CreateCell
 
 	private void setEmptyCellProps(Cell cell, MRoute column, int rowNo) {
 		cell.setDroppable("true");

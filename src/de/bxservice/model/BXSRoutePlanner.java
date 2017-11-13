@@ -1,5 +1,6 @@
 package de.bxservice.model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +14,10 @@ public class BXSRoutePlanner {
 	private List<MRoute> routes;
 	private List<BXSTransportationResource> resources;
 	private Map<MRoute, List<BXSTransportationResource>> routeResources = new HashMap<>();
-
-	public BXSRoutePlanner() {
+	private Timestamp routeDate;
+	
+	public BXSRoutePlanner(Timestamp routeDate) {
+		this.routeDate = routeDate;
 		getRoutes();
 		getCards();
 		setRouteResources();
@@ -39,7 +42,7 @@ public class BXSRoutePlanner {
 
 		for (MRoute route : routes)
 			routeResources.put(route, new ArrayList<>());
-		
+
 		return routes;
 	}
 
@@ -55,83 +58,209 @@ public class BXSRoutePlanner {
 			getCards();
 		return  resources.size();
 	}
-	
+
 	private void setRouteResources() {
-		
+
 		for (BXSTransportationResource resource : resources) {
 			MRoute route = getRoute(resource);
+			resource.setRoute(route);
 			routeResources.get(route).add(resource);
 		}
 	}
-	
+
 	private MRoute getRoute(BXSTransportationResource resource) {
 		for (MRoute route : getRoutes()) {
 			if (!resource.isAvailable() && route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
 				return route;
 			} else if (resource.isAvailable()) {
-				if (resource.getDelivery() == null && route.getValue().equals(MRoute.AVAILABLE_VALUE))
+				if (resource.getDelivery(routeDate) == null && route.getValue().equals(MRoute.AVAILABLE_VALUE))
 					return route;
-				else if (resource.getDelivery() != null && 
-						resource.getDelivery().getBAY_Route_ID() == route.getBAY_Route_ID())
+				else if (resource.getDelivery(routeDate) != null && 
+						resource.getDelivery(routeDate).getBAY_Route_ID() == route.getBAY_Route_ID())
 					return route;
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	public boolean hasMoreCards(MRoute route) {
 		return !routeResources.get(route).isEmpty();	
 	}
-	
+
 	public BXSTransportationResource getRecord(MRoute route) {
 		BXSTransportationResource record = routeResources.get(route).get(0);
-		routeResources.get(route).remove(record);
 		return record;
 	}
-	
-	/*	public boolean changeColumn(BXSPlannerColumn endColumn, BXSDriver driver) {
 
-		boolean success = true;
+	public BXSTransportationResource getTruck(MRoute route) {
 
-		// First case -> End column is a truck
-		if (endColumn.getTruck() != null) {
-			X_BAY_Delivery driverDelivery = driver.getDelivery();
-			X_BAY_Delivery truckDelivery = endColumn.getTruck().getDelivery();
+		for (BXSTransportationResource record : routeResources.get(route)) {
+			if (record.isTruck())
+				return record;
+		}
 
-			if (truckDelivery == null) {
-				truckDelivery = new X_BAY_Delivery(Env.getCtx(), 0, null);
-				truckDelivery.setBAY_Truck_ID(endColumn.getTruck().getTruckID());
-			}
+		return null;
+	}
 
-			String columnName = null;
-			if (truckDelivery.getBAY_Driver_ID() == 0) {
-				columnName = X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID;
-			} else {
-				columnName = X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID;
-			}
-			success = truckDelivery.set_ValueOfColumnReturningBoolean(columnName, driver.getResource().getS_Resource_ID());
-			truckDelivery.saveEx();
+	public BXSTransportationResource getDriver(MRoute route) {
+		for (BXSTransportationResource record : routeResources.get(route)) {
+			if (record.isDriver())
+				return record;
+		}
 
-			if (driverDelivery != null) {
-				columnName = null;
-				if (!driver.isCoDriver()) {
-					columnName = X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID;
-				} else {
-					columnName = X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID;
-				}
-				driverDelivery.set_ValueOfColumnReturningBoolean(columnName, null);
-				driverDelivery.saveEx();
-			}
+		return null;
+
+	}
+
+	public BXSTransportationResource getCoDriver(MRoute route) {
+		for (BXSTransportationResource record : routeResources.get(route)) {
+			if (record.isCoDriver())
+				return record;
+		}
+
+		return null;
+	}
+
+	public void removeRecord(BXSTransportationResource record) {
+		routeResources.get(record.getRoute()).remove(record);
+	}
+
+	public boolean assignTruck(BXSTransportationResource selectedCard, MRoute endRoute) {
+
+		MDelivery originalDelivery = selectedCard.getDelivery(routeDate);
+
+		MDelivery routeDelivery = endRoute.getDelivery(false, routeDate);
+		selectedCard.setDelivery(routeDelivery);
+		selectedCard.setRoute(endRoute);
+		routeDelivery.setBAY_Truck_ID(selectedCard.getResource_ID());
+		routeDelivery.saveEx();
+
+		if (originalDelivery != null) {
+			originalDelivery.setBAY_Truck_ID(0);
+			originalDelivery.saveEx();
+		}
+
+		return true;
+	}
+
+	public boolean assignDriver(BXSTransportationResource selectedCard, MRoute endRoute, boolean isCoDriver) {
+
+		boolean success = false;
+		MDelivery originalDelivery = selectedCard.getDelivery(routeDate);
+
+		String columnName = null;
+		if (!isCoDriver) {
+			columnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
 		} else {
-			X_BAY_Delivery driverDelivery = driver.getDelivery();
-			if (driverDelivery != null) {
+			columnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		}
 
-			}
+		String originalColumnName = null;
+		if (!selectedCard.isCoDriver()) {
+			originalColumnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
+		} else {
+			originalColumnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		}
 
-			driver.setAssignedTruck(null);
+		MDelivery routeDelivery = endRoute.getDelivery(false, routeDate);
+		selectedCard.setDelivery(routeDelivery);
+		selectedCard.setRoute(endRoute);
+		success = routeDelivery.set_ValueOfColumnReturningBoolean(columnName, selectedCard.getResource().getS_Resource_ID());
+		routeDelivery.saveEx();
+
+		if (originalDelivery != null) {
+			originalDelivery.set_ValueOfColumnReturningBoolean(originalColumnName, null);
+			originalDelivery.saveEx();
 		}
 
 		return success;
-	}*/
+	}
+
+	public boolean makeResourceAvailable(BXSTransportationResource selectedCard, MRoute availableRoute) {
+
+		boolean success = false;
+		MDelivery resourceDelivery = selectedCard.getDelivery(routeDate);
+		
+		String columnName = null;
+		if (selectedCard.isDriver()) {
+			columnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
+		} else if (selectedCard.isCoDriver()) {
+			columnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else {
+			columnName = MDelivery.COLUMNNAME_BAY_Truck_ID;
+		}
+
+		selectedCard.setDelivery(null);
+		selectedCard.setRoute(availableRoute);
+		success = resourceDelivery.set_ValueOfColumnReturningBoolean(columnName, null);
+		resourceDelivery.saveEx();
+
+		return success;
+	}
+	
+	public boolean swapCards(BXSTransportationResource startCard, BXSTransportationResource endCard) {
+		if (startCard.isDriver() || startCard.isCoDriver()) 
+			return swapDrivers(startCard, endCard);
+		else
+			return swapTrucks(startCard, endCard);
+	}
+	
+	private boolean swapTrucks(BXSTransportationResource startCard, BXSTransportationResource endCard) {
+
+		MDelivery startDelivery = startCard.getDelivery(routeDate);
+		MDelivery endDelivery = endCard.getDelivery(routeDate);
+		MRoute startRoute = startCard.getRoute();
+		MRoute endRoute = endCard.getRoute();
+
+		startCard.setDelivery(endDelivery);
+		startCard.setRoute(endRoute);
+		endCard.setDelivery(startDelivery);
+		endCard.setRoute(startRoute);
+
+		startDelivery.setBAY_Truck_ID(endCard.getResource_ID());
+		startDelivery.saveEx();
+		endDelivery.setBAY_Truck_ID(startCard.getResource_ID());
+		endDelivery.saveEx();
+
+		return true;
+	}
+	
+	private boolean swapDrivers(BXSTransportationResource startCard, BXSTransportationResource endCard) {
+
+		boolean success = false;
+
+		MDelivery startDelivery = startCard.getDelivery(routeDate);
+		MDelivery endDelivery = endCard.getDelivery(routeDate);
+		MRoute startRoute = startCard.getRoute();
+		MRoute endRoute = endCard.getRoute();
+		
+		String startColumnName = null;
+		if (startCard.isDriver()) {
+			startColumnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
+		} else if (startCard.isCoDriver()) {
+			startColumnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else
+			return false;
+
+		String endColumnName = null;
+		if (endCard.isDriver()) {
+			endColumnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
+		} else if (endCard.isCoDriver()) {
+			endColumnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else 
+			return false;
+		
+		startCard.setDelivery(endDelivery);
+		startCard.setRoute(endRoute);
+		endCard.setDelivery(startDelivery);
+		endCard.setRoute(startRoute);
+
+		success = startDelivery.set_ValueOfColumnReturningBoolean(startColumnName, endCard.getResource_ID());
+		startDelivery.saveEx();
+		success = endDelivery.set_ValueOfColumnReturningBoolean(endColumnName, startCard.getResource_ID());
+		endDelivery.saveEx();
+
+		return success;
+	}
 }

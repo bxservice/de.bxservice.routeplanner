@@ -17,9 +17,9 @@ public class BXSTransportationResource implements ITransportationResource {
 	private static final int S_ResourceType_Driver_ID = 1000000;
 	private static final int S_ResourceType_Truck_ID  = 1000001;
 
+	protected MRoute    route = null;
 	protected MResource resource = null;
 	private   MDelivery delivery;
-	private   int resourceTypeID = 0;
 
 	public BXSTransportationResource(MResource resource) {
 		this.resource = Objects.requireNonNull(resource, "Resource must not be null");;
@@ -28,9 +28,33 @@ public class BXSTransportationResource implements ITransportationResource {
 	public MResource getResource() {
 		return resource;
 	}
+	
+	public int getResource_ID() {
+		return resource.getS_Resource_ID();
+	}
+	
+	public int getResourceType_ID() {
+		return resource.getS_ResourceType_ID();
+	}
 
 	public boolean isTruck() {
-		return resourceTypeID == S_ResourceType_Truck_ID;
+		return resource.getS_ResourceType_ID() == S_ResourceType_Truck_ID;
+	}
+	
+	public boolean isCoDriver() {
+		if (delivery != null) {
+			return delivery.getBAY_CoDriver_ID() == getResource_ID();
+		}
+			
+		return false;
+	}
+	
+	public boolean isDriver() {
+		if (delivery != null) {
+			return delivery.getBAY_Driver_ID() == getResource_ID();
+		}
+			
+		return false;
 	}
 
 	public boolean isAvailable() {
@@ -62,21 +86,30 @@ public class BXSTransportationResource implements ITransportationResource {
 			return getUnavailabilityReason();
 	}
 
-	public MDelivery getDelivery() {
+	public MRoute getRoute() {
+		return route;
+	}
+
+	public void setRoute(MRoute route) {
+		this.route = route;
+	}
+
+	public MDelivery getDelivery(Timestamp routeDate) {
 
 		if (delivery == null && resource.isAvailable()) {
-			//Timestamp date = TimeUtil.trunc(Env.getContextAsDate(Env.getCtx(), "#Date"), TimeUtil.TRUNC_DAY);
 
-			StringBuilder whereClause = new StringBuilder("AD_Client_ID IN (0, ?) AND ");
+			Timestamp date = TimeUtil.trunc(routeDate, TimeUtil.TRUNC_DAY);
+			
+			StringBuilder whereClause = new StringBuilder("AD_Client_ID IN (0, ?) AND TRUNC("+ MDelivery.COLUMNNAME_BAY_RouteDate + ")=? AND ");
 			Object[] parameters;
 			
 			if (isTruck()) {
 				whereClause.append(MDelivery.COLUMNNAME_BAY_Truck_ID + " = ?");
-				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), resource.getS_Resource_ID()};
+				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID()};
 			} else {
 				whereClause.append("(" + X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID + " = ? OR " +
 						X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID + " = ?) ");
-				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), resource.getS_Resource_ID(), resource.getS_Resource_ID()};
+				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID(), resource.getS_Resource_ID()};
 			}
 
 			delivery = new Query(Env.getCtx(), MDelivery.Table_Name, whereClause.toString(), null)
@@ -87,6 +120,10 @@ public class BXSTransportationResource implements ITransportationResource {
 		}
 		
 		return delivery;
+	}
+
+	public void setDelivery(MDelivery delivery) {
+		this.delivery = delivery;
 	}
 
 	public static List<BXSTransportationResource> getTResources() {

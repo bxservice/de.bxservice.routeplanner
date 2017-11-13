@@ -14,11 +14,14 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.editor.WDateEditor;
+import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.grid.WQuickEntry;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.panel.CustomForm;
 import org.adempiere.webui.panel.IFormController;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.model.MResource;
 import org.compiere.util.Env;
@@ -32,6 +35,7 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.Column;
 import org.zkoss.zul.Columns;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
@@ -42,13 +46,15 @@ import de.bxservice.model.BXSTransportationResource;
 import de.bxservice.model.MRoute;
 
 public class WRoutePlanner extends RoutePlanner 
-	implements IFormController, EventListener<Event>, ValueChangeListener {
+implements IFormController, EventListener<Event>, ValueChangeListener {
 
 	private static final String RESOURCE_TYPE = "RESOURCE_TYPE";
-	private static final String TRUCK_CELL    = "TRUCK_CELL";
-	private static final String DRIVER_CELL   = "DRIVER_CELL";
-	private static final String CODRIVER_CELL = "CODRIVER_CELL";
-	
+	public static final String TRUCK_CELL    = "TRUCK_CELL";
+	public static final String DRIVER_CELL   = "DRIVER_CELL";
+	public static final String CODRIVER_CELL = "CODRIVER_CELL";
+	public static final String CARD_CELL     = "CARD_CELL";
+	private int windowNo = 0;
+
 	private CustomForm mainForm = new CustomForm();
 
 	private Borderlayout mainLayout	= new Borderlayout();
@@ -72,6 +78,7 @@ public class WRoutePlanner extends RoutePlanner
 
 	public WRoutePlanner() {
 		super();
+		windowNo = SessionManager.getAppDesktop().registerWindow(this);
 		initForm();
 	}
 
@@ -147,7 +154,7 @@ public class WRoutePlanner extends RoutePlanner
 		routePanel.setSpan("true");
 
 		int numCols=0;
-		setBoardContent();
+		setBoardContent(routeDate);
 		numCols = getNumberOfColumns();
 
 		if (numCols > 0) {
@@ -187,40 +194,65 @@ public class WRoutePlanner extends RoutePlanner
 			rowNo++;
 			for (MRoute route : getRoutes()) {
 				if (!hasMoreCards(route)) {
-					String title = null;
-					if (!route.getValue().equals(MRoute.AVAILABLE_VALUE) &&
-							!route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
-						switch(rowNo) {
-						case 1:
-							title = "Truck";
-							break;
-						case 2:
-							title = "Driver";
-							break;
-						case 3:
-							title = "Co Driver";
-						}						
-					}
-					if (title != null) 
-						createEmptyCardCell(row, route, title, rowNo);
-					else 
-						createEmptyCell(row, route);
+					createEmptyCell(row, route, rowNo);
 				} else {
 					row.setStyle("background: transparent;");
-					createCardCell(row, getRecord(route));
-					numberOfCells--;
-				}		
+					BXSTransportationResource record = null;
+					if (route.getValue().equals(MRoute.AVAILABLE_VALUE) ||
+							route.getValue().equals(MRoute.UNAVAILABLE_VALUE))
+						record = getRecord(route);
+					else {
+						switch(rowNo) {
+						case 1:
+							record = getTruck(route);
+							break;
+						case 2:
+							record = getDriver(route);
+							break;
+						case 3:
+							record = getCoDriver(route);
+						}
+					}
+					if (record != null) {
+						createCardCell(row, record);
+						removeRecord(record);
+						numberOfCells--;
+					} else
+						createEmptyCell(row, route, rowNo);
+				}
 			}
 			rows.appendChild(row);
 			row=new Row();
 		}
 	}//createRows
 
-	private void createEmptyCell(Row row, MRoute column) {
+	private void createEmptyCell(Row row, MRoute route, int rowNo) {
+		String title = null;
+		if (!route.getValue().equals(MRoute.AVAILABLE_VALUE) &&
+				!route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
+			switch(rowNo) {
+			case 1:
+				title = "Truck";
+				break;
+			case 2:
+				title = "Driver";
+				break;
+			case 3:
+				title = "Co Driver";
+			}						
+		}
+		if (title != null) 
+			createEmptyCardCell(row, route, title, rowNo);
+		else 
+			createEmptyBlankCell(row, route);
+	}
+
+	private void createEmptyBlankCell(Row row, MRoute column) {
 		row.appendCellChild(new Space());
 
-		//Do not drop into unavailable
-		if (column.getValue().equals(MRoute.AVAILABLE_VALUE))
+		//Do not drop into a route if not the designated cells
+		if (column.getValue().equals(MRoute.AVAILABLE_VALUE) ||
+				column.getValue().equals(MRoute.UNAVAILABLE_VALUE))
 			setEmptyCellProps(row.getLastCell(), column);
 	}
 
@@ -229,7 +261,7 @@ public class WRoutePlanner extends RoutePlanner
 		row.appendCellChild(l);
 		setCellProps(row.getLastCell(), resource);
 	}
-	
+
 	private void createEmptyCardCell(Row row, MRoute column, String title, int rowNo) {
 		Label label = new Label(title);
 		label.setStyle("display: inline;");
@@ -253,7 +285,7 @@ public class WRoutePlanner extends RoutePlanner
 
 		return div;
 	}//CreateCell
-	
+
 	private void setEmptyCellProps(Cell cell, MRoute column, int rowNo) {
 		cell.setDroppable("true");
 		cell.addEventListener(Events.ON_DROP, this);
@@ -283,12 +315,14 @@ public class WRoutePlanner extends RoutePlanner
 		cell.addEventListener(Events.ON_DOUBLE_CLICK, this);
 		cell.setStyle("text-align: left;");
 		cell.setStyle("border-style: outset; ");
+		cell.setAttribute(RESOURCE_TYPE, CARD_CELL);
 
 		mapCellCards.put(cell, resource);
 	}
 
 	private void setEmptyCellProps(Cell lastCell, MRoute column) {
 		lastCell.setDroppable("true");
+		lastCell.setAttribute(RESOURCE_TYPE, CARD_CELL);
 		lastCell.addEventListener(Events.ON_DROP, this);
 		mapEmptyCellField.put(lastCell, column);
 	}
@@ -296,7 +330,7 @@ public class WRoutePlanner extends RoutePlanner
 	@Override
 	public void onEvent(Event e) throws Exception {
 		if (Events.ON_DOUBLE_CLICK.equals(e.getName())) {
-			
+
 			int recordID = 0;
 			int tableID = 0;
 			if (e.getTarget() instanceof Column) {
@@ -321,35 +355,59 @@ public class WRoutePlanner extends RoutePlanner
 			Cell endItem = null;
 			if (me.getTarget() instanceof Cell) {
 				endItem = (Cell) me.getTarget();
+
+				BXSTransportationResource startCard = mapCellCards.get(startItem);
+				BXSTransportationResource endCard = mapCellCards.get(endItem);
+				boolean success = false;
 				
-				System.out.println(endItem.getAttribute(RESOURCE_TYPE));
+				MRoute endColumn = null;
+				if (endCard == null) 
+					endColumn = mapEmptyCellField.get(endItem);
+				else if (endCard.getDelivery(routeDate) == null) //Dropped in available
+					endColumn = endCard.getRoute();
 
-				/*BXSDriver selectedDriver = mapCellCards.get(startItem);
-				BXSPlannerColumn startColumn = selectedDriver.getAsociatedColumn();
-				BXSDriver endField = mapCellCards.get(endItem);
-				BXSPlannerColumn endColumn;
+				if (endColumn != null) {
+					if (endColumn.getValue().equals(MRoute.UNAVAILABLE_VALUE))
+						actionQuickEntry(startCard.getResource());
+					else
+						success = assignCard(startCard, endColumn, (String) endItem.getAttribute(RESOURCE_TYPE));
+				}
+				else
+					success = swapCard(startCard, endCard);
 
-				if (endField == null) {
-					// check empty cells
-					endColumn = mapEmptyCellField.get(me.getTarget());
-				} else
-					endColumn = endField.getAsociatedColumn();
-
-				if (!swapCard(startColumn, endColumn, selectedDriver));
-				//Messagebox.show(Msg.getMsg(Env.getCtx(), MKanbanCard.KDB_ErrorMessage));
-				else {
+				if (success)
 					refresh();
-				}*/
+				else if (getErrorMessage() != null && !getErrorMessage().isEmpty())
+					Messagebox.show(getErrorMessage());
 			}
 		}
-
 	}
+	
+	private void actionQuickEntry(MResource resource) {
+
+		int Record_ID = resource.getS_Resource_ID();
+		int windowId = Env.getZoomWindowID(resource.get_Table_ID(), Record_ID);
+		final WQuickEntry vqe = new WQuickEntry(windowNo, windowId);
+		if (vqe.getQuickFields()<=0)
+			return;
+
+		vqe.loadRecord(Record_ID);
+		vqe.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+			@Override
+			public void onEvent(Event event) throws Exception {
+				refresh();
+			}
+		});
+
+		vqe.setSizable(true);
+		AEnv.showWindow(vqe);
+	}	//	actionQuickEntry
 
 	@Override
 	public void valueChange(ValueChangeEvent e) {
 		if (e.getSource() == dateField) {
 			routeDate = (Timestamp) dateField.getValue();
-			System.out.println(routeDate);
+			refresh();
 		}
 	}
 

@@ -283,8 +283,12 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		StringBuilder divStyle = new StringBuilder();
 
 		divStyle.append("padding-left: 4px; text-align: left; cursor:pointer;");
-		if (!resource.isAvailable())
+		
+		String labelText = resource.getDescription();
+		if (!resource.isAvailable(routeDate)) {
 			divStyle.append("background-color: red;");
+			labelText = resource.getUnavailabilityReason(routeDate);
+		}
 
 		div.setStyle(divStyle.toString());
 		
@@ -292,7 +296,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		Label label = new Label(resource.getName());
 		vlayout.appendChild(label);
 		label.setVflex("1");
-		label = new Label(resource.getDescription());
+		label = new Label(labelText);
 		label.setVflex("1");
 		vlayout.appendChild(label);
 		vlayout.setHflex("1");
@@ -364,7 +368,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 
 	private void setCellProps(Cell cell, BXSTransportationResource resource) {
 
-		if (resource.isAvailable()) {
+		if (resource.isAvailable(routeDate)) {
 			cell.setDraggable("true");
 			cell.setDroppable("true");
 			cell.addEventListener(Events.ON_DROP, this);

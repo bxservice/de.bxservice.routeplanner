@@ -16,8 +16,7 @@ Require-Bundle: org.adempiere.base;bundle-version="4.1.0",
  zul;bundle-version="8.0.1",
  zweb;bundle-version="8.0.1"
 Bundle-Activator: org.adempiere.plugin.utils.AdempiereActivator
-Service-Component: OSGI-INF/routeplanner_calloutfactory.xml,OSGI-INF/routeplanner_modelfactory.xml,
- OSGI-INF/routeplanner_formfactory.xml
+Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy
 Import-Package: org.zkoss.zul
 Bundle-ClassPath: .

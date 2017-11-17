@@ -70,9 +70,9 @@ public class BXSRoutePlanner {
 
 	private MRoute getRoute(BXSTransportationResource resource) {
 		for (MRoute route : getRoutes()) {
-			if (!resource.isAvailable() && route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
+			if (!resource.isAvailable(routeDate) && route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
 				return route;
-			} else if (resource.isAvailable()) {
+			} else if (resource.isAvailable(routeDate)) {
 				if (resource.getDelivery(routeDate) == null && route.getValue().equals(MRoute.AVAILABLE_VALUE))
 					return route;
 				else if (resource.getDelivery(routeDate) != null && 

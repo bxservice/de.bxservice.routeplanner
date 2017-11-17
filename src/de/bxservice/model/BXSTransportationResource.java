@@ -57,12 +57,15 @@ public class BXSTransportationResource implements ITransportationResource {
 		return false;
 	}
 
-	public boolean isAvailable() {
-		return !MResourceUnAvailable.isUnAvailable(resource, Env.getContextAsDate(Env.getCtx(), "#Date"));
+	public boolean isAvailable(Timestamp date) {
+		if (date == null)
+			date = Env.getContextAsDate(Env.getCtx(), "#Date");
+		return !MResourceUnAvailable.isUnAvailable(resource, date);
 	}
 
-	public String getUnavailabilityReason() {
-		Timestamp date = TimeUtil.trunc(Env.getContextAsDate(Env.getCtx(), "#Date"), TimeUtil.TRUNC_DAY);
+	public String getUnavailabilityReason(Timestamp date) {
+		if (date == null)
+			date = TimeUtil.trunc(Env.getContextAsDate(Env.getCtx(), "#Date"), TimeUtil.TRUNC_DAY);
 
 		final String whereClause = MResource.COLUMNNAME_S_Resource_ID+"=? AND AD_Client_ID=?"
 				+" AND TRUNC("+I_S_ResourceUnAvailable.COLUMNNAME_DateFrom+") <= ?"
@@ -72,7 +75,7 @@ public class BXSTransportationResource implements ITransportationResource {
 				.setParameters(resource.getS_Resource_ID(), resource.getAD_Client_ID(), date, date)
 				.first();
 
-		return ru.getDescription();
+		return ru != null ? ru.getDescription() : "";
 	}
 
 	public String getName() {
@@ -80,10 +83,7 @@ public class BXSTransportationResource implements ITransportationResource {
 	}
 
 	public String getDescription() {
-		if (isAvailable())
-			return resource.getDescription();
-		else
-			return getUnavailabilityReason();
+		return resource.getDescription();
 	}
 
 	public MRoute getRoute() {

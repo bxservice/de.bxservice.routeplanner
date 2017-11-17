@@ -23,7 +23,7 @@ public class RoutePlanner_CopyDelivery extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-		log.info("Copying last date deliveries");
+		log.warning("Copying last date deliveries");
 		
 		//Check if working day - not weekends nor holidays
 		currentDay = TimeUtil.trunc(Env.getContextAsDate(getCtx(), "#Date"), TimeUtil.TRUNC_DAY);

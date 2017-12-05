@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.bxservice.model.BXSRoutePlanner;
 import de.bxservice.model.BXSTransportationResource;
+import de.bxservice.model.MDelivery;
 import de.bxservice.model.MRoute;
 import de.bxservice.webui.form.WRoutePlanner;
 
@@ -58,6 +59,10 @@ public class RoutePlanner {
 		return routePlanner.getCoDriver(route);
 	}
 	
+	public BXSTransportationResource getCoDriver2(MRoute route) {
+		return routePlanner.getCoDriver2(route);
+	}
+	
 	public void removeRecord(BXSTransportationResource record) {
 		routePlanner.removeRecord(record);
 	}
@@ -89,13 +94,14 @@ public class RoutePlanner {
 			}
 			//Assign a truck to an empty truck cell
 			return routePlanner.assignTruck(selectedCard, endColumn);
-		} else if (WRoutePlanner.DRIVER_CELL.equals(cellType) || WRoutePlanner.CODRIVER_CELL.equals(cellType)) { //Move to an empty driver cell
+		} else if (WRoutePlanner.DRIVER_CELL.equals(cellType) || WRoutePlanner.CODRIVER_CELL.equals(cellType)
+				|| WRoutePlanner.CODRIVER2_CELL.equals(cellType)) { //Move to an empty driver cell
 			if (selectedCard.isTruck()) {
 				setErrorMessage("Only drivers can be assigned to this cell");
 				return false;
 			}
 			
-			return routePlanner.assignDriver(selectedCard, endColumn, WRoutePlanner.CODRIVER_CELL.equals(cellType));
+			return routePlanner.assignDriver(selectedCard, endColumn, getColumnName(cellType));
 		} else if (WRoutePlanner.CARD_CELL.equals(cellType)) { //Move to a cell with a card 
 			//First case: Move to a cell in available
 			if (endColumn.getValue().equals(MRoute.AVAILABLE_VALUE)) {
@@ -119,5 +125,17 @@ public class RoutePlanner {
 		} 
 		
 		return routePlanner.swapCards(selectedCard, endCard);
+	}
+	
+	private String getColumnName(String driverType) {
+		if (WRoutePlanner.DRIVER_CELL.equals(driverType)) {
+			return MDelivery.COLUMNNAME_BAY_Driver_ID;
+		} else if (WRoutePlanner.CODRIVER_CELL.equals(driverType)) {
+			return MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else if (WRoutePlanner.CODRIVER2_CELL.equals(driverType)) {
+			return MDelivery.COLUMNNAME_BAY_CoDriver2_ID;
+		}
+		
+		return null;
 	}
 }

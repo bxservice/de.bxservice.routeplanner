@@ -31,7 +31,7 @@ public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20171108L;
+	private static final long serialVersionUID = 20171205L;
 
     /** Standard Constructor */
     public X_BAY_Delivery (Properties ctx, int BAY_Delivery_ID, String trxName)
@@ -40,8 +40,7 @@ public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent
       /** if (BAY_Delivery_ID == 0)
         {
 			setBAY_Delivery_ID (0);
-			setBAY_Driver_ID (0);
-			setBAY_Truck_ID (0);
+			setBAY_Route_ID (0);
         } */
     }
 
@@ -72,6 +71,31 @@ public class X_BAY_Delivery extends PO implements I_BAY_Delivery, I_Persistent
         .append(get_ID()).append("]");
       return sb.toString();
     }
+
+	public org.compiere.model.I_S_Resource getBAY_CoDriver2() throws RuntimeException
+    {
+		return (org.compiere.model.I_S_Resource)MTable.get(getCtx(), org.compiere.model.I_S_Resource.Table_Name)
+			.getPO(getBAY_CoDriver2_ID(), get_TrxName());	}
+
+	/** Set Co-Driver 2.
+		@param BAY_CoDriver2_ID Co-Driver 2	  */
+	public void setBAY_CoDriver2_ID (int BAY_CoDriver2_ID)
+	{
+		if (BAY_CoDriver2_ID < 1) 
+			set_Value (COLUMNNAME_BAY_CoDriver2_ID, null);
+		else 
+			set_Value (COLUMNNAME_BAY_CoDriver2_ID, Integer.valueOf(BAY_CoDriver2_ID));
+	}
+
+	/** Get Co-Driver 2.
+		@return Co-Driver 2	  */
+	public int getBAY_CoDriver2_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_BAY_CoDriver2_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
 
 	public org.compiere.model.I_S_Resource getBAY_CoDriver() throws RuntimeException
     {

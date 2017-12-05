@@ -121,6 +121,15 @@ public class BXSRoutePlanner {
 
 		return null;
 	}
+	
+	public BXSTransportationResource getCoDriver2(MRoute route) {
+		for (BXSTransportationResource record : routeResources.get(route)) {
+			if (record.isCoDriver2())
+				return record;
+		}
+
+		return null;
+	}
 
 	public void removeRecord(BXSTransportationResource record) {
 		routeResources.get(record.getRoute()).remove(record);
@@ -144,23 +153,21 @@ public class BXSRoutePlanner {
 		return true;
 	}
 
-	public boolean assignDriver(BXSTransportationResource selectedCard, MRoute endRoute, boolean isCoDriver) {
+	public boolean assignDriver(BXSTransportationResource selectedCard, MRoute endRoute, String columnName) {
 
+		if (columnName == null || columnName.isEmpty())
+			return false;
+		
 		boolean success = false;
 		MDelivery originalDelivery = selectedCard.getDelivery(routeDate);
 
-		String columnName = null;
-		if (!isCoDriver) {
-			columnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
-		} else {
-			columnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
-		}
-
 		String originalColumnName = null;
-		if (!selectedCard.isCoDriver()) {
+		if (selectedCard.isDriver()) {
 			originalColumnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
-		} else {
+		} else if (selectedCard.isCoDriver()) {
 			originalColumnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else {
+			originalColumnName = MDelivery.COLUMNNAME_BAY_CoDriver2_ID;
 		}
 
 		MDelivery routeDelivery = endRoute.getDelivery(false, routeDate);
@@ -187,6 +194,8 @@ public class BXSRoutePlanner {
 			columnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
 		} else if (selectedCard.isCoDriver()) {
 			columnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else if (selectedCard.isCoDriver2()) {
+			columnName = MDelivery.COLUMNNAME_BAY_CoDriver2_ID;
 		} else {
 			columnName = MDelivery.COLUMNNAME_BAY_Truck_ID;
 		}
@@ -200,7 +209,7 @@ public class BXSRoutePlanner {
 	}
 	
 	public boolean swapCards(BXSTransportationResource startCard, BXSTransportationResource endCard) {
-		if (startCard.isDriver() || startCard.isCoDriver()) 
+		if (startCard.isDriver() || startCard.isCoDriver() || startCard.isCoDriver2()) 
 			return swapDrivers(startCard, endCard);
 		else
 			return swapTrucks(startCard, endCard);
@@ -240,6 +249,8 @@ public class BXSRoutePlanner {
 			startColumnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
 		} else if (startCard.isCoDriver()) {
 			startColumnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else if (startCard.isCoDriver()) {
+			startColumnName = MDelivery.COLUMNNAME_BAY_CoDriver2_ID;
 		} else
 			return false;
 
@@ -248,6 +259,8 @@ public class BXSRoutePlanner {
 			endColumnName = MDelivery.COLUMNNAME_BAY_Driver_ID;
 		} else if (endCard.isCoDriver()) {
 			endColumnName = MDelivery.COLUMNNAME_BAY_CoDriver_ID;
+		} else if (endCard.isCoDriver2()) {
+			endColumnName = MDelivery.COLUMNNAME_BAY_CoDriver2_ID;
 		} else 
 			return false;
 		

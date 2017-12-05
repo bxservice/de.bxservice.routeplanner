@@ -63,6 +63,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	public static final String TRUCK_CELL    = "TRUCK_CELL";
 	public static final String DRIVER_CELL   = "DRIVER_CELL";
 	public static final String CODRIVER_CELL = "CODRIVER_CELL";
+	public static final String CODRIVER2_CELL = "CODRIVER2_CELL";
 	public static final String CARD_CELL     = "CARD_CELL";
 	private int windowNo = 0;
 
@@ -197,7 +198,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		Row row = new Row();
 		int numberOfCells = getNumberOfCards();
 		int rowNo = 0;
-		while (numberOfCells > 0 || rowNo < 4) {
+		while (numberOfCells > 0 || rowNo < 5) {
 			rowNo++;
 			for (MRoute route : getRoutes()) {
 				if (!hasMoreCards(route)) {
@@ -218,6 +219,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 							break;
 						case 3:
 							record = getCoDriver(route);
+							break;
+						case 4:
+							record = getCoDriver2(route);
 						}
 					}
 					if (record != null) {
@@ -247,6 +251,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 				break;
 			case 3:
 				title = "Co Driver";
+				break;
+			case 4:
+				title = "Co Driver 2";
 			}						
 		}
 		if (title != null) 
@@ -363,6 +370,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 			break;
 		case 3:
 			cell.setAttribute(RESOURCE_TYPE, CODRIVER_CELL);
+			break;
+		case 4:
+			cell.setAttribute(RESOURCE_TYPE, CODRIVER2_CELL);
 		}
 	}
 

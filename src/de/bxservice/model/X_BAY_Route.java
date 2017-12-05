@@ -24,14 +24,14 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Model for BAY_Route
  *  @author iDempiere (generated) 
- *  @version Release 4.1 - $Id$ */
+ *  @version Release 5.1 - $Id$ */
 public class X_BAY_Route extends PO implements I_BAY_Route, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20171019L;
+	private static final long serialVersionUID = 20171205L;
 
     /** Standard Constructor */
     public X_BAY_Route (Properties ctx, int BAY_Route_ID, String trxName)
@@ -72,6 +72,58 @@ public class X_BAY_Route extends PO implements I_BAY_Route, I_Persistent
         .append(get_ID()).append("]");
       return sb.toString();
     }
+
+	/** Set Extraordinary Route.
+		@param BAY_isExtraordinary 
+		Defines if the route is extraordinary.
+	  */
+	public void setBAY_isExtraordinary (boolean BAY_isExtraordinary)
+	{
+		set_Value (COLUMNNAME_BAY_isExtraordinary, Boolean.valueOf(BAY_isExtraordinary));
+	}
+
+	/** Get Extraordinary Route.
+		@return Defines if the route is extraordinary.
+	  */
+	public boolean isBAY_isExtraordinary () 
+	{
+		Object oo = get_Value(COLUMNNAME_BAY_isExtraordinary);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
+
+	public I_BAY_Route getBAY_MasterRoute() throws RuntimeException
+    {
+		return (I_BAY_Route)MTable.get(getCtx(), I_BAY_Route.Table_Name)
+			.getPO(getBAY_MasterRoute_ID(), get_TrxName());	}
+
+	/** Set Parent Route.
+		@param BAY_MasterRoute_ID 
+		A parent route can identify that this route will we always set us the parent.
+	  */
+	public void setBAY_MasterRoute_ID (int BAY_MasterRoute_ID)
+	{
+		if (BAY_MasterRoute_ID < 1) 
+			set_Value (COLUMNNAME_BAY_MasterRoute_ID, null);
+		else 
+			set_Value (COLUMNNAME_BAY_MasterRoute_ID, Integer.valueOf(BAY_MasterRoute_ID));
+	}
+
+	/** Get Parent Route.
+		@return A parent route can identify that this route will we always set us the parent.
+	  */
+	public int getBAY_MasterRoute_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_BAY_MasterRoute_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
 
 	/** Set Route.
 		@param BAY_Route_ID Route	  */

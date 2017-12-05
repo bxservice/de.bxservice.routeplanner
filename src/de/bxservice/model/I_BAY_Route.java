@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for BAY_Route
  *  @author iDempiere (generated) 
- *  @version Release 4.1
+ *  @version Release 5.1
  */
 @SuppressWarnings("all")
 public interface I_BAY_Route 
@@ -63,6 +63,34 @@ public interface I_BAY_Route
 	  * Organizational entity within client
 	  */
 	public int getAD_Org_ID();
+
+    /** Column name BAY_isExtraordinary */
+    public static final String COLUMNNAME_BAY_isExtraordinary = "BAY_isExtraordinary";
+
+	/** Set Extraordinary Route.
+	  * Defines if the route is extraordinary.
+	  */
+	public void setBAY_isExtraordinary (boolean BAY_isExtraordinary);
+
+	/** Get Extraordinary Route.
+	  * Defines if the route is extraordinary.
+	  */
+	public boolean isBAY_isExtraordinary();
+
+    /** Column name BAY_MasterRoute_ID */
+    public static final String COLUMNNAME_BAY_MasterRoute_ID = "BAY_MasterRoute_ID";
+
+	/** Set Parent Route.
+	  * A parent route can identify that this route will we always set us the parent.
+	  */
+	public void setBAY_MasterRoute_ID (int BAY_MasterRoute_ID);
+
+	/** Get Parent Route.
+	  * A parent route can identify that this route will we always set us the parent.
+	  */
+	public int getBAY_MasterRoute_ID();
+
+	public I_BAY_Route getBAY_MasterRoute() throws RuntimeException;
 
     /** Column name BAY_Route_ID */
     public static final String COLUMNNAME_BAY_Route_ID = "BAY_Route_ID";

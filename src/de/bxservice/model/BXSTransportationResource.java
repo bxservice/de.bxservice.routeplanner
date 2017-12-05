@@ -49,6 +49,14 @@ public class BXSTransportationResource implements ITransportationResource {
 		return false;
 	}
 	
+	public boolean isCoDriver2() {
+		if (delivery != null) {
+			return delivery.getBAY_CoDriver2_ID() == getResource_ID();
+		}
+			
+		return false;
+	}
+	
 	public boolean isDriver() {
 		if (delivery != null) {
 			return delivery.getBAY_Driver_ID() == getResource_ID();
@@ -108,8 +116,9 @@ public class BXSTransportationResource implements ITransportationResource {
 				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID()};
 			} else {
 				whereClause.append("(" + X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID + " = ? OR " +
-						X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID + " = ?) ");
-				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID(), resource.getS_Resource_ID()};
+						X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID + " = ? OR " +  
+						X_BAY_Delivery.COLUMNNAME_BAY_CoDriver2_ID + " = ?) ");
+				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID(), resource.getS_Resource_ID(), resource.getS_Resource_ID()};
 			}
 
 			delivery = new Query(Env.getCtx(), MDelivery.Table_Name, whereClause.toString(), null)

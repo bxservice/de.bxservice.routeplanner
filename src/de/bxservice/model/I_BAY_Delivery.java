@@ -64,6 +64,17 @@ public interface I_BAY_Delivery
 	  */
 	public int getAD_Org_ID();
 
+    /** Column name BAY_CoDriver2_ID */
+    public static final String COLUMNNAME_BAY_CoDriver2_ID = "BAY_CoDriver2_ID";
+
+	/** Set Co-Driver 2	  */
+	public void setBAY_CoDriver2_ID (int BAY_CoDriver2_ID);
+
+	/** Get Co-Driver 2	  */
+	public int getBAY_CoDriver2_ID();
+
+	public org.compiere.model.I_S_Resource getBAY_CoDriver2() throws RuntimeException;
+
     /** Column name BAY_CoDriver_ID */
     public static final String COLUMNNAME_BAY_CoDriver_ID = "BAY_CoDriver_ID";
 

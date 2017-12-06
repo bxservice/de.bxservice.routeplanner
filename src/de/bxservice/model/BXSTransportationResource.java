@@ -102,23 +102,32 @@ public class BXSTransportationResource implements ITransportationResource {
 		this.route = route;
 	}
 
-	public MDelivery getDelivery(Timestamp routeDate) {
+	public MDelivery getDelivery(Timestamp routeDate, boolean isExtraordinary) {
 
 		if (delivery == null && resource.isAvailable()) {
 
 			Timestamp date = TimeUtil.trunc(routeDate, TimeUtil.TRUNC_DAY);
 			
 			StringBuilder whereClause = new StringBuilder("AD_Client_ID IN (0, ?) AND TRUNC("+ MDelivery.COLUMNNAME_BAY_RouteDate + ")=? AND ");
+			whereClause.append(MDelivery.COLUMNNAME_BAY_Route_ID);
+			whereClause.append(" IN (SELECT ");
+			whereClause.append(MRoute.COLUMNNAME_BAY_Route_ID);
+			whereClause.append(" FROM ");
+			whereClause.append(MRoute.Table_Name);
+			whereClause.append(" WHERE ");
+			whereClause.append(MRoute.COLUMNNAME_BAY_isExtraordinary);
+			whereClause.append(" =?) AND ");
+			
 			Object[] parameters;
 			
 			if (isTruck()) {
 				whereClause.append(MDelivery.COLUMNNAME_BAY_Truck_ID + " = ?");
-				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID()};
+				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, isExtraordinary, resource.getS_Resource_ID()};
 			} else {
 				whereClause.append("(" + X_BAY_Delivery.COLUMNNAME_BAY_Driver_ID + " = ? OR " +
 						X_BAY_Delivery.COLUMNNAME_BAY_CoDriver_ID + " = ? OR " +  
 						X_BAY_Delivery.COLUMNNAME_BAY_CoDriver2_ID + " = ?) ");
-				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, resource.getS_Resource_ID(), resource.getS_Resource_ID(), resource.getS_Resource_ID()};
+				parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, isExtraordinary, resource.getS_Resource_ID(), resource.getS_Resource_ID(), resource.getS_Resource_ID()};
 			}
 
 			delivery = new Query(Env.getCtx(), MDelivery.Table_Name, whereClause.toString(), null)

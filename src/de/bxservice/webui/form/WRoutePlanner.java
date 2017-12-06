@@ -10,9 +10,11 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import org.adempiere.util.Callback;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -66,6 +68,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	public static final String CODRIVER2_CELL = "CODRIVER2_CELL";
 	public static final String CARD_CELL     = "CARD_CELL";
 	private int windowNo = 0;
+	private boolean copyExtraordinaryDeliveries = false;
 
 	private CustomForm mainForm = new CustomForm();
 
@@ -76,6 +79,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	private Label lDate = new Label();
 	private WDateEditor dateField;
 	private Button bRefresh = new Button();
+	private Checkbox onlyExtraordinary = new Checkbox();
 	private Hbox northPanelHbox;
 
 	private Map<Column, MRoute> mapColumnRoute = new HashMap<>();
@@ -120,6 +124,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		bRefresh.setImage(ThemeManager.getThemeResource("images/Refresh16.png"));
 		bRefresh.setTooltiptext(Msg.getMsg(Env.getCtx(), "Refresh"));
 		bRefresh.addEventListener(Events.ON_CLICK, this);
+		
+		onlyExtraordinary.setText("besondere Tour");
+		onlyExtraordinary.addActionListener(this);
 
 		Rows rows = gridLayout.newRows();
 		Row row = rows.newRow();
@@ -127,6 +134,8 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		northPanelHbox.appendChild(lDate.rightAlign());
 		northPanelHbox.appendChild(dateField.getComponent());
 		northPanelHbox.appendChild(bRefresh);
+		northPanelHbox.appendChild(new Space());
+		northPanelHbox.appendChild(onlyExtraordinary);
 
 		Cell cell = new Cell();
 		cell.setAlign("left");
@@ -164,7 +173,13 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		routePanel.setSpan("true");
 
 		int numCols=0;
-		setBoardContent(routeDate);
+		setBoardContent(routeDate, onlyExtraordinary.isSelected());
+		
+		if (onlyExtraordinary.isSelected() && copyExtraordinaryDeliveries) {
+			copyExtraordinaryDeliveries();
+			copyExtraordinaryDeliveries = false;
+		}
+
 		numCols = getNumberOfColumns();
 
 		if (numCols > 0) {
@@ -244,16 +259,16 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 				!route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
 			switch(rowNo) {
 			case 1:
-				title = "Truck";
+				title = "LKW";
 				break;
 			case 2:
-				title = "Driver";
+				title = "Fahrer";
 				break;
 			case 3:
-				title = "Co Driver";
+				title = "Beifahrer";
 				break;
 			case 4:
-				title = "Co Driver 2";
+				title = "Beifahrer 2";
 			}						
 		}
 		if (title != null) 
@@ -414,7 +429,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 				tableID = resource.get_Table_ID();
 			}
 			zoom(recordID, tableID);
-		} else if (Events.ON_CLICK.equals(e.getName()) && e.getTarget() instanceof Button) {
+		} else if ((Events.ON_CLICK.equals(e.getName()) && e.getTarget() instanceof Button)) {
 			refresh();
 		} else if (e instanceof DropEvent ) {
 			DropEvent me = (DropEvent) e;
@@ -435,7 +450,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 				MRoute endColumn = null;
 				if (endCard == null) 
 					endColumn = mapEmptyCellField.get(endItem);
-				else if (endCard.getDelivery(routeDate) == null) //Dropped in available
+				else if (endCard.getDelivery(routeDate, onlyExtraordinary.isSelected()) == null) //Dropped in available
 					endColumn = endCard.getRoute();
 
 				if (endColumn != null) {
@@ -452,6 +467,22 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 				else if (getErrorMessage() != null && !getErrorMessage().isEmpty())
 					Messagebox.show(getErrorMessage());
 			}
+		} else if (e.getTarget() == onlyExtraordinary) {
+			if (!onlyExtraordinary.isSelected())
+				refresh();
+			else if (!existExtraordinaryRoutes()) {
+				Messagebox.show("Keine aktiven bensodere Tour gefunden");
+				onlyExtraordinary.setSelected(false);
+			} else if (!existExtraordinaryDeliveries()) {
+				org.adempiere.webui.component.Messagebox.showDialog("Kopieren Auslieferfahrt von die Basistour?", "", Messagebox.OK | Messagebox.CANCEL, Messagebox.QUESTION, new Callback<Integer>() {
+					@Override
+					public void onCallback(Integer result) {
+						copyExtraordinaryDeliveries = result != null && result.intValue() == Messagebox.OK;
+						refresh();
+					}
+				});
+			} else
+				refresh();
 		}
 	}
 	

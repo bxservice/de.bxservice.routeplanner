@@ -47,6 +47,8 @@ public class RoutePlanner_CopyDelivery extends SvrProcess {
 		
 		int counter = 0;
 		for (MDelivery delivery : lastDeliveries) {
+			if (delivery.getBAY_Route().isBAY_isExtraordinary())
+				continue;
 			counter ++;
 			StringBuilder message = new StringBuilder("Delivery created");
 			MDelivery newDelivery = MDelivery.copyDelivery(delivery, get_TrxName());

@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.compiere.model.Query;
 import org.compiere.util.Env;
+import org.compiere.util.TimeUtil;
 
 public class BXSRoutePlanner {
 
@@ -15,9 +16,11 @@ public class BXSRoutePlanner {
 	private List<BXSTransportationResource> resources;
 	private Map<MRoute, List<BXSTransportationResource>> routeResources = new HashMap<>();
 	private Timestamp routeDate;
+	private boolean onlyExtraordinary = false;
 	
-	public BXSRoutePlanner(Timestamp routeDate) {
+	public BXSRoutePlanner(Timestamp routeDate, boolean onlyExtraordinary) {
 		this.routeDate = routeDate;
+		this.onlyExtraordinary = onlyExtraordinary;
 		getRoutes();
 		getCards();
 		setRouteResources();
@@ -34,8 +37,10 @@ public class BXSRoutePlanner {
 		if (routes != null && !routes.isEmpty())
 			return routes;
 
-		routes = new Query(Env.getCtx(), MRoute.Table_Name, " AD_Client_ID IN (0, ?) ", null)
-				.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx())})
+		routes = new Query(Env.getCtx(), MRoute.Table_Name, " AD_Client_ID IN (0, ?) AND (" + 
+							MRoute.COLUMNNAME_BAY_isExtraordinary + " = ? OR "+ 
+							MRoute.COLUMNNAME_Value + " IN (?,?))", null)
+				.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx()), onlyExtraordinary, MRoute.AVAILABLE_VALUE, MRoute.UNAVAILABLE_VALUE})
 				.setOnlyActiveRecords(true)
 				.setOrderBy(MRoute.COLUMNNAME_Value)
 				.list();
@@ -52,7 +57,7 @@ public class BXSRoutePlanner {
 
 		return resources;
 	}
-
+	
 	public int getNumberOfCards() {
 		if (resources == null)
 			getCards();
@@ -60,11 +65,12 @@ public class BXSRoutePlanner {
 	}
 
 	private void setRouteResources() {
-
 		for (BXSTransportationResource resource : resources) {
 			MRoute route = getRoute(resource);
-			resource.setRoute(route);
-			routeResources.get(route).add(resource);
+			if (route != null) {
+				resource.setRoute(route);
+				routeResources.get(route).add(resource);
+			} 		
 		}
 	}
 
@@ -73,14 +79,15 @@ public class BXSRoutePlanner {
 			if (!resource.isAvailable(routeDate) && route.getValue().equals(MRoute.UNAVAILABLE_VALUE)) {
 				return route;
 			} else if (resource.isAvailable(routeDate)) {
-				if (resource.getDelivery(routeDate) == null && route.getValue().equals(MRoute.AVAILABLE_VALUE))
+				MDelivery delivery = resource.getDelivery(routeDate, onlyExtraordinary);
+				if (delivery == null && route.getValue().equals(MRoute.AVAILABLE_VALUE))
 					return route;
-				else if (resource.getDelivery(routeDate) != null && 
-						resource.getDelivery(routeDate).getBAY_Route_ID() == route.getBAY_Route_ID())
+				else if (delivery != null && 
+						delivery.getBAY_Route_ID() == route.getBAY_Route_ID())
 					return route;
 			}
 		}
-
+		
 		return null;
 	}
 
@@ -137,7 +144,7 @@ public class BXSRoutePlanner {
 
 	public boolean assignTruck(BXSTransportationResource selectedCard, MRoute endRoute) {
 
-		MDelivery originalDelivery = selectedCard.getDelivery(routeDate);
+		MDelivery originalDelivery = selectedCard.getDelivery(routeDate, onlyExtraordinary);
 
 		MDelivery routeDelivery = endRoute.getDelivery(false, routeDate);
 		selectedCard.setDelivery(routeDelivery);
@@ -159,7 +166,7 @@ public class BXSRoutePlanner {
 			return false;
 		
 		boolean success = false;
-		MDelivery originalDelivery = selectedCard.getDelivery(routeDate);
+		MDelivery originalDelivery = selectedCard.getDelivery(routeDate, onlyExtraordinary);
 
 		String originalColumnName = null;
 		if (selectedCard.isDriver()) {
@@ -187,7 +194,7 @@ public class BXSRoutePlanner {
 	public boolean makeResourceAvailable(BXSTransportationResource selectedCard, MRoute availableRoute) {
 
 		boolean success = false;
-		MDelivery resourceDelivery = selectedCard.getDelivery(routeDate);
+		MDelivery resourceDelivery = selectedCard.getDelivery(routeDate, onlyExtraordinary);
 		
 		String columnName = null;
 		if (selectedCard.isDriver()) {
@@ -217,8 +224,8 @@ public class BXSRoutePlanner {
 	
 	private boolean swapTrucks(BXSTransportationResource startCard, BXSTransportationResource endCard) {
 
-		MDelivery startDelivery = startCard.getDelivery(routeDate);
-		MDelivery endDelivery = endCard.getDelivery(routeDate);
+		MDelivery startDelivery = startCard.getDelivery(routeDate, onlyExtraordinary);
+		MDelivery endDelivery = endCard.getDelivery(routeDate, onlyExtraordinary);
 		MRoute startRoute = startCard.getRoute();
 		MRoute endRoute = endCard.getRoute();
 
@@ -239,8 +246,8 @@ public class BXSRoutePlanner {
 
 		boolean success = false;
 
-		MDelivery startDelivery = startCard.getDelivery(routeDate);
-		MDelivery endDelivery = endCard.getDelivery(routeDate);
+		MDelivery startDelivery = startCard.getDelivery(routeDate, onlyExtraordinary);
+		MDelivery endDelivery = endCard.getDelivery(routeDate, onlyExtraordinary);
 		MRoute startRoute = startCard.getRoute();
 		MRoute endRoute = endCard.getRoute();
 		
@@ -275,5 +282,63 @@ public class BXSRoutePlanner {
 		endDelivery.saveEx();
 
 		return success;
+	}
+	
+	public boolean existExtraordinaryRoutes() {
+		MRoute route = new Query(Env.getCtx(), MRoute.Table_Name, " AD_Client_ID IN (0, ?) AND " + 
+							MRoute.COLUMNNAME_BAY_isExtraordinary + " = ?", null)
+				.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx()), true})
+				.setOnlyActiveRecords(true)
+				.setOrderBy(MRoute.COLUMNNAME_Value)
+				.first();
+		return route != null;
+	}
+	
+	public boolean existExtraordinaryDeliveries() {
+		Timestamp date = TimeUtil.trunc(routeDate, TimeUtil.TRUNC_DAY);
+		
+		StringBuilder whereClause = new StringBuilder("AD_Client_ID IN (0, ?) AND TRUNC(");
+		whereClause.append(MDelivery.COLUMNNAME_BAY_RouteDate);
+		whereClause.append(")=? AND ");
+		whereClause.append(MDelivery.COLUMNNAME_BAY_Route_ID);
+		whereClause.append(" IN (SELECT ");
+		whereClause.append(MRoute.COLUMNNAME_BAY_Route_ID);
+		whereClause.append(" FROM ");
+		whereClause.append(MRoute.Table_Name);
+		whereClause.append(" WHERE ");
+		whereClause.append(MRoute.COLUMNNAME_BAY_isExtraordinary);
+		whereClause.append(" =?)");
+		
+		Object[] parameters = new Object[]{Env.getAD_Client_ID(Env.getCtx()), date, true};
+
+		MDelivery delivery = new Query(Env.getCtx(), MDelivery.Table_Name, whereClause.toString(), null)
+				.setParameters(parameters)
+				.setOnlyActiveRecords(true)
+				.first();
+		
+		return delivery != null;
+	}
+	
+	public void copyExtraordinaryDeliveries() {
+		List<MDelivery> lastDeliveries = MDelivery.getLastDateDeliveries();
+		
+		if (lastDeliveries == null || lastDeliveries.isEmpty())
+			return;
+		
+		for (MDelivery delivery : lastDeliveries) {
+			for (MRoute route : getRoutes()) {
+				if (route.getBAY_MasterRoute_ID() == delivery.getBAY_Route_ID()) {
+					MDelivery newDelivery = MDelivery.copyDelivery(delivery, null);
+					newDelivery.setBAY_Route_ID(route.getBAY_Route_ID());
+					newDelivery.setBAY_RouteDate(routeDate);
+					newDelivery.saveEx();
+				}
+			}
+		}
+		
+		for (MRoute route : routes)
+			routeResources.get(route).clear();
+		
+		setRouteResources();
 	}
 }

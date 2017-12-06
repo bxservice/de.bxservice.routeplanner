@@ -35,6 +35,7 @@ public class MDelivery extends X_BAY_Delivery {
 		MDelivery deliveryCopy = new MDelivery(Env.getCtx(), 0, trxName);
 		deliveryCopy.setBAY_Driver_ID(originalDelivery.getBAY_Driver_ID());
 		deliveryCopy.setBAY_CoDriver_ID(originalDelivery.getBAY_CoDriver_ID());
+		deliveryCopy.setBAY_CoDriver2_ID(originalDelivery.getBAY_CoDriver2_ID());
 		deliveryCopy.setBAY_Truck_ID(originalDelivery.getBAY_Truck_ID());
 		deliveryCopy.setBAY_Route_ID(originalDelivery.getBAY_Route_ID());
 		

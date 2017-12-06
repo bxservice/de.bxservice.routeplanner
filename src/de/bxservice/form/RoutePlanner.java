@@ -14,8 +14,8 @@ public class RoutePlanner {
 	private BXSRoutePlanner routePlanner;
 	private String errorMessage;
 
-	public void setBoardContent(Timestamp routeDate) {
-		routePlanner = new BXSRoutePlanner(routeDate);
+	public void setBoardContent(Timestamp routeDate, boolean onlyExtraordinary) {
+		routePlanner = new BXSRoutePlanner(routeDate, onlyExtraordinary);
 		errorMessage = null;
 	}
 	
@@ -137,5 +137,17 @@ public class RoutePlanner {
 		}
 		
 		return null;
+	}
+	
+	protected boolean existExtraordinaryRoutes() {
+		return routePlanner.existExtraordinaryRoutes();
+	}
+	
+	protected boolean existExtraordinaryDeliveries() {
+		return routePlanner.existExtraordinaryDeliveries();
+	}
+	
+	protected void copyExtraordinaryDeliveries() {
+		routePlanner.copyExtraordinaryDeliveries();
 	}
 }

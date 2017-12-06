@@ -211,6 +211,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		mapEmptyCellField.clear();
 		Rows rows = routePanel.newRows();
 		Row row = new Row();
+		row.setHeight("100px");
 		int numberOfCells = getNumberOfCards();
 		int rowNo = 0;
 		while (numberOfCells > 0 || rowNo < 5) {
@@ -317,12 +318,12 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		//Left side - labels
 		Label label = new Label(resource.getName());
 		vlayout.appendChild(label);
-		label.setVflex("1");
+		//label.setVflex("1");
 		label = new Label(labelText);
-		label.setVflex("1");
+		//label.setVflex("1");
 		vlayout.appendChild(label);
 		vlayout.setHflex("1");
-		vlayout.setVflex("1");
+		//vlayout.setVflex("1");
 
 		div.appendChild(vlayout);
 		
@@ -401,7 +402,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 
 		cell.addEventListener(Events.ON_DOUBLE_CLICK, this);
 		cell.setStyle("text-align: left;");
-		cell.setStyle("border-style: outset; ");
+		cell.setStyle("border-style: outset;");
 		cell.setAttribute(RESOURCE_TYPE, CARD_CELL);
 
 		mapCellCards.put(cell, resource);

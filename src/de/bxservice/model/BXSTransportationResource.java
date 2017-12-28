@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.compiere.model.I_S_ResourceUnAvailable;
 import org.compiere.model.MResource;
+import org.compiere.model.MResourceType;
 import org.compiere.model.MResourceUnAvailable;
 import org.compiere.model.Query;
 import org.compiere.util.Env;
@@ -14,8 +15,8 @@ import org.compiere.util.TimeUtil;
 
 public class BXSTransportationResource implements ITransportationResource {
 
-	private static final int S_ResourceType_Driver_ID = 1000000;
-	private static final int S_ResourceType_Truck_ID  = 1000001;
+	private static final String S_ResourceType_Driver_VALUE = "Fahrer";
+	private static final String S_ResourceType_Truck_VALUE  = "LKW";
 
 	protected MRoute    route = null;
 	protected MResource resource = null;
@@ -38,7 +39,7 @@ public class BXSTransportationResource implements ITransportationResource {
 	}
 
 	public boolean isTruck() {
-		return resource.getS_ResourceType_ID() == S_ResourceType_Truck_ID;
+		return MResourceType.get(Env.getCtx(), resource.getS_ResourceType_ID()).getValue().equals(S_ResourceType_Truck_VALUE);
 	}
 	
 	public boolean isCoDriver() {
@@ -147,10 +148,19 @@ public class BXSTransportationResource implements ITransportationResource {
 	public static List<BXSTransportationResource> getTResources() {
 
 		List<BXSTransportationResource> transportResources = new ArrayList<>();
-
-		List<MResource> resources = new Query(Env.getCtx(), MResource.Table_Name, " AD_Client_ID IN (0, ?) "
-									+ "AND S_ResourceType_ID IN (?,?)", null)
-				.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx()), S_ResourceType_Driver_ID, S_ResourceType_Truck_ID})
+		
+		StringBuilder whereClause = new StringBuilder(" AD_Client_ID IN (0, ?) AND ");
+		whereClause.append(MResource.COLUMNNAME_S_ResourceType_ID);
+		whereClause.append(" IN (SELECT t.");
+		whereClause.append(MResourceType.COLUMNNAME_S_ResourceType_ID);
+		whereClause.append(" FROM ");
+		whereClause.append(MResourceType.Table_Name);
+		whereClause.append(" t WHERE t.");
+		whereClause.append(MResourceType.COLUMNNAME_Value);
+		whereClause.append(" IN (?,?))");
+		
+		List<MResource> resources = new Query(Env.getCtx(), MResource.Table_Name, whereClause.toString(), null)
+				.setParameters(new Object[]{Env.getAD_Client_ID(Env.getCtx()), S_ResourceType_Driver_VALUE, S_ResourceType_Truck_VALUE})
 				.setOnlyActiveRecords(true)
 				.setOrderBy(MResource.COLUMNNAME_S_ResourceType_ID)
 				.list();

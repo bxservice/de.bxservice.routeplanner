@@ -3,6 +3,7 @@ package de.bxservice.model;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -65,12 +66,16 @@ public class BXSRoutePlanner {
 	}
 
 	private void setRouteResources() {
-		for (BXSTransportationResource resource : resources) {
+		Iterator<BXSTransportationResource> iter= resources.iterator();
+		while (iter.hasNext()) {
+			BXSTransportationResource resource = iter.next();
 			MRoute route = getRoute(resource);
 			if (route != null) {
 				resource.setRoute(route);
 				routeResources.get(route).add(resource);
-			} 		
+			} else{
+		        iter.remove();
+		    }
 		}
 	}
 

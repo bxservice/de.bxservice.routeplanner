@@ -57,7 +57,7 @@ public class RoutePlanner_Callouts implements IColumnCalloutFactory {
 				//Return the closest date in the same week that a route will be delivered to the postal code
 				String whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? AND weekday::integer >= EXTRACT(ISODOW from ?::date)";
 				X_BAY_RoutePlan routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
-						.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx), DB.TO_STRING(mTab.getField("DatePromised").getValue().toString())})
+						.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx), DB.TO_STRING(mTab.getField("DateOrdered").getValue().toString())})
 						.setOrderBy(X_BAY_RoutePlan.COLUMNNAME_WeekDay)
 						.first();
 				

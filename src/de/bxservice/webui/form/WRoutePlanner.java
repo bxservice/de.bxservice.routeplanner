@@ -46,7 +46,6 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.Column;
 import org.zkoss.zul.Columns;
 import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Hlayout;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.North;
@@ -288,7 +287,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	}
 
 	private void createCardCell(Row row, BXSTransportationResource resource) {
-		Hlayout l = createCell(resource);
+		Vlayout l = createCell(resource);
 		row.appendCellChild(l);
 		setCellProps(row.getLastCell(), resource);
 	}
@@ -300,8 +299,8 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		setEmptyCellProps(row.getLastCell(), column, rowNo);
 	}
 
-	private Hlayout createCell(BXSTransportationResource resource) {
-		Hlayout div = new Hlayout();
+	private Vlayout createCell(BXSTransportationResource resource) {
+		Vlayout div = new Vlayout();
 		Vlayout vlayout = new Vlayout();		
 		StringBuilder divStyle = new StringBuilder();
 
@@ -324,8 +323,6 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		vlayout.appendChild(label);
 		vlayout.setHflex("1");
 		//vlayout.setVflex("1");
-
-		div.appendChild(vlayout);
 		
 		// Right panel - image
 		Image imageDiv = new Image();
@@ -367,7 +364,8 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		imageDiv.setHeight("75px");
 
 		div.appendChild(imageDiv);
-		
+		div.appendChild(vlayout);
+
 		return div;
 	} //CreateCell
 

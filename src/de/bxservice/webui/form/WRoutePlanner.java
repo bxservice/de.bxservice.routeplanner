@@ -66,6 +66,8 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	public static final String CODRIVER_CELL = "CODRIVER_CELL";
 	public static final String CODRIVER2_CELL = "CODRIVER2_CELL";
 	public static final String CARD_CELL     = "CARD_CELL";
+	public static final String REFRESH_BUTTON = "RefreshB";
+	public static final String REPORT_BUTTON  = "ReportB";
 	private int windowNo = 0;
 	private boolean copyExtraordinaryDeliveries = false;
 
@@ -78,6 +80,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 	private Label lDate = new Label();
 	private WDateEditor dateField;
 	private Button bRefresh = new Button();
+	private Button bPrintProcess = new Button();
 	private Checkbox onlyExtraordinary = new Checkbox();
 	private Hbox northPanelHbox;
 
@@ -120,9 +123,15 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		dateField.setValue(routeDate);
 		dateField.getComponent().setStyle("text-align: right; padding-right: 15px;");
 
+		bRefresh.setId(REFRESH_BUTTON);
 		bRefresh.setImage(ThemeManager.getThemeResource("images/Refresh16.png"));
 		bRefresh.setTooltiptext(Msg.getMsg(Env.getCtx(), "Refresh"));
 		bRefresh.addEventListener(Events.ON_CLICK, this);
+
+		bPrintProcess.setId(REPORT_BUTTON);
+		bPrintProcess.setImage(ThemeManager.getThemeResource("images/Report16.png"));
+		bPrintProcess.setTooltiptext("Mitarbeiter Einsatzplan");
+		bPrintProcess.addEventListener(Events.ON_CLICK, this);
 		
 		onlyExtraordinary.setText("besondere Tour");
 		onlyExtraordinary.addActionListener(this);
@@ -133,6 +142,8 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		northPanelHbox.appendChild(lDate.rightAlign());
 		northPanelHbox.appendChild(dateField.getComponent());
 		northPanelHbox.appendChild(bRefresh);
+		northPanelHbox.appendChild(new Space());
+		northPanelHbox.appendChild(bPrintProcess);
 		northPanelHbox.appendChild(new Space());
 		northPanelHbox.appendChild(onlyExtraordinary);
 
@@ -429,7 +440,11 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 			}
 			zoom(recordID, tableID);
 		} else if ((Events.ON_CLICK.equals(e.getName()) && e.getTarget() instanceof Button)) {
-			refresh();
+			if (REFRESH_BUTTON.equals(e.getTarget().getId()))
+				refresh();
+			else if (REPORT_BUTTON.equals(e.getTarget().getId())) {
+				printEmployeeWorkSchedule(routeDate);
+			}
 		} else if (e instanceof DropEvent ) {
 			DropEvent me = (DropEvent) e;
 			Cell startItem = null;

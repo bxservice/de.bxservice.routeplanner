@@ -1,7 +1,13 @@
 package de.bxservice.form;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+
+import org.compiere.model.MProcess;
+import org.compiere.process.ProcessInfo;
+import org.compiere.process.ProcessInfoParameter;
+import org.compiere.process.ServerProcessCtl;
 
 import de.bxservice.model.BXSRoutePlanner;
 import de.bxservice.model.BXSTransportationResource;
@@ -149,5 +155,17 @@ public class RoutePlanner {
 	
 	protected void copyExtraordinaryDeliveries() {
 		routePlanner.copyExtraordinaryDeliveries();
+	}
+
+	public void printEmployeeWorkSchedule(Timestamp routeDate) {
+		ProcessInfo pi = new ProcessInfo("", MProcess.getProcess_ID("Mitarbeiter-Einsatzplan", null));
+		
+		ArrayList<ProcessInfoParameter> jasperPrintParams = new ArrayList<ProcessInfoParameter>();
+		ProcessInfoParameter pip;
+		pip = new ProcessInfoParameter("DateOrdered", routeDate, null, null, null);
+		jasperPrintParams.add(pip);
+		pi.setParameter(jasperPrintParams.toArray(new ProcessInfoParameter[]{}));
+
+		ServerProcessCtl.process(pi, null);
 	}
 }

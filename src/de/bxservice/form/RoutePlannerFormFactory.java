@@ -29,6 +29,7 @@ import org.adempiere.webui.factory.IFormFactory;
 import org.adempiere.webui.panel.ADForm;
 
 import de.bxservice.webui.form.WRoutePlanner;
+import de.bxservice.webui.form.WTourMap;
 
 public class RoutePlannerFormFactory implements IFormFactory {
 	
@@ -37,6 +38,8 @@ public class RoutePlannerFormFactory implements IFormFactory {
 
 		if (WRoutePlanner.class.getName().equals(formName))
 			return new WRoutePlanner().getForm();
+		if (WTourMap.class.getName().equals(formName))
+			return new WTourMap();
 
 		return null;
 	}

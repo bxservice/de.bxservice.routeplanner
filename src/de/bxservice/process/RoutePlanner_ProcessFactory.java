@@ -7,13 +7,11 @@ public class RoutePlanner_ProcessFactory implements IProcessFactory {
 
 	@Override
 	public ProcessCall newProcessInstance(String className) {
-		ProcessCall process = null;
-		if ("de.bxservice.process.RoutePlanner_CopyDelivery".equals(className)) {
-			try {
-				process = RoutePlanner_CopyDelivery.class.newInstance();
-			} catch (Exception e) {}
-		}
-		return process;
+		if (RoutePlanner_CopyDelivery.class.getName().equals(className))
+			return new RoutePlanner_CopyDelivery();
+		if (KanbanBayenTourMap.class.getName().equals(className))
+			return new KanbanBayenTourMap();
+		return null;
 	}
 
 }

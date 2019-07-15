@@ -11,6 +11,8 @@ public class RoutePlanner_ProcessFactory implements IProcessFactory {
 			return new RoutePlanner_CopyDelivery();
 		if (KanbanBayenTourMap.class.getName().equals(className))
 			return new KanbanBayenTourMap();
+		if (KanbanBayenTourBoardMap.class.getName().equals(className))
+			return new KanbanBayenTourBoardMap();
 		return null;
 	}
 

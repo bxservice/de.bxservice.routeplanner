@@ -12,8 +12,8 @@ import org.kanbanboard.model.MKanbanBoard;
 import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zul.Window.Mode;
 
-import de.bxservice.model.MBXSGeoreferencing;
-import de.bxservice.webui.form.WGeoreferencingMap;
+import de.bxservice.georeferencing.model.MBXSGeoreferencing;
+import de.bxservice.georeferencing.webui.form.WGeoreferencingMap;
 
 /**
  * Class made to create a map showing the delivery points in all the routes 

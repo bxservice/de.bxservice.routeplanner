@@ -39,8 +39,9 @@ public class RoutePlanner_Callouts implements IColumnCalloutFactory {
 
 			// Called from C_BPartner_Location_I in C_Order
 			// to fill automatically the route based on the location
-			
-			if (value == null) 
+			//Don't override the defined default in Tab
+			if (value == null || (mTab.getField("BAY_Route_ID") == null ||
+					mTab.getField("BAY_Route_ID").getDefault() != null)) 
 				return "";
 			
 			int C_BPartner_Location_ID = ((Integer) value).intValue();

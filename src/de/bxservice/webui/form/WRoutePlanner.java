@@ -343,7 +343,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 			imageName = "delivery-truck.png";
 		} else if (resource.getResource().getAD_User() != null) {
 			MUser user = (MUser) resource.getResource().getAD_User();
-			MImage userImage = MImage.get(Env.getCtx(), user.getAD_Image_ID());
+			MImage userImage = MImage.get(user.getAD_Image_ID());
 			if (userImage != null && userImage.getData() != null) {
 				AImage aImage;
 				try {

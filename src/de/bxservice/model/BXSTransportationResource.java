@@ -39,7 +39,7 @@ public class BXSTransportationResource implements ITransportationResource {
 	}
 
 	public boolean isTruck() {
-		return MResourceType.get(Env.getCtx(), resource.getS_ResourceType_ID()).getValue().equals(S_ResourceType_Truck_VALUE);
+		return MResourceType.get(resource.getS_ResourceType_ID()).getValue().equals(S_ResourceType_Truck_VALUE);
 	}
 	
 	public boolean isCoDriver() {

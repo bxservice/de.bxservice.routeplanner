@@ -59,13 +59,13 @@ public class KanbanBayenTourMap extends SvrProcess implements IServerPushCallbac
 			String points_str="";
 			points_str+="https://graphhopper.com/maps/?";
 
-			MOrgInfo org = MOrgInfo.get(getCtx(), 1000000, get_TrxName());
-			MLocation orgloc = MLocation.get(getCtx(), org.getC_Location_ID(), get_TrxName());
+			MOrgInfo org = MOrgInfo.get(1000000);
+			MLocation orgloc = MLocation.get(org.getC_Location_ID());
 			points_str+="&point="+orgloc.getMapsLocation();
 
 			for (MOrder order : statusOrders) {
 				MBPartnerLocation cloc = new MBPartnerLocation(getCtx(), order.getC_BPartner_Location_ID(), get_TrxName());
-				MLocation m_loc = MLocation.get(getCtx(), cloc.getC_Location_ID(), get_TrxName());
+				MLocation m_loc = MLocation.get(cloc.getC_Location_ID());
 				points_str+="&point="+m_loc.getMapsLocation();
 			}
 

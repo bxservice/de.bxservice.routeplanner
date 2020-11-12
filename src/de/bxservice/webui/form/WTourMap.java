@@ -1,5 +1,10 @@
 package de.bxservice.webui.form;
 
+import java.awt.Desktop;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import org.adempiere.webui.panel.ADForm;
 import org.zkoss.zul.Iframe;
 
@@ -36,6 +41,11 @@ public class WTourMap extends ADForm {
 	
 	public void setRoute(String route) {
 		gmaps.setSrc(route);
+		try {
+			Desktop.getDesktop().browse(new URI(route));
+		} catch (IOException | URISyntaxException e) {
+			e.printStackTrace();
+		}
 		this.appendChild(gmaps);
 	}
 }

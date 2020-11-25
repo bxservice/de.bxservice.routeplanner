@@ -102,7 +102,6 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 
 	public void initForm() {
 		jbInit();
-		LayoutUtils.sendDeferLayoutEvent(mainLayout, 100);
 	}
 
 	private void jbInit() {

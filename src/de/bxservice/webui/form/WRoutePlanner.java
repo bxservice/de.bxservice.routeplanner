@@ -123,12 +123,18 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		dateField.getComponent().setStyle("text-align: right; padding-right: 15px;");
 
 		bRefresh.setId(REFRESH_BUTTON);
-		bRefresh.setImage(ThemeManager.getThemeResource("images/Refresh16.png"));
+		if (ThemeManager.isUseFontIconForImage())
+			bRefresh.setIconSclass("z-icon-Refresh");
+		else
+			bRefresh.setImage(ThemeManager.getThemeResource("images/Refresh16.png"));
 		bRefresh.setTooltiptext(Msg.getMsg(Env.getCtx(), "Refresh"));
 		bRefresh.addEventListener(Events.ON_CLICK, this);
 
 		bPrintProcess.setId(REPORT_BUTTON);
-		bPrintProcess.setImage(ThemeManager.getThemeResource("images/Report16.png"));
+		if (ThemeManager.isUseFontIconForImage())
+			bPrintProcess.setIconSclass("z-icon-Report");
+		else
+			bPrintProcess.setImage(ThemeManager.getThemeResource("images/Report16.png"));
 		bPrintProcess.setTooltiptext("Mitarbeiter Einsatzplan");
 		bPrintProcess.addEventListener(Events.ON_CLICK, this);
 		

@@ -54,28 +54,31 @@ public class RoutePlanner_Callouts implements IColumnCalloutFactory {
 				bpartnerRouteId = (int) bPartnerLocation.get_Value("BAY_Route_ID");
 			} else {
 				MLocation location = bPartnerLocation.getLocation(true);
+				Object dateOrdered = mTab.getField("DateOrdered").getValue();
 
-				//Return the closest date in the same week that a route will be delivered to the postal code
-				String whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? AND weekday::integer >= EXTRACT(ISODOW from ?::date)";
-				X_BAY_RoutePlan routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
-						.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx), DB.TO_STRING(mTab.getField("DateOrdered").getValue().toString())})
-						.setOrderBy(X_BAY_RoutePlan.COLUMNNAME_WeekDay)
-						.first();
-				
-				if (routePlan != null) {
-					X_BAY_Route route = new X_BAY_Route(ctx, routePlan.getBAY_Route_ID(),null);
-					bpartnerRouteId = route.getBAY_Route_ID();
-				} else {
-					log.info("No route is going to this address in the rest of the week");
-
-					whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? ";
-					routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
-							.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx)})
+				if (location != null && dateOrdered != null) {
+					//Return the closest date in the same week that a route will be delivered to the postal code
+					String whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? AND weekday::integer >= EXTRACT(ISODOW from ?::date)";
+					X_BAY_RoutePlan routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
+							.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx), DB.TO_STRING(dateOrdered.toString())})
 							.setOrderBy(X_BAY_RoutePlan.COLUMNNAME_WeekDay)
 							.first();
+					
 					if (routePlan != null) {
 						X_BAY_Route route = new X_BAY_Route(ctx, routePlan.getBAY_Route_ID(),null);
 						bpartnerRouteId = route.getBAY_Route_ID();
+					} else {
+						log.info("No route is going to this address in the rest of the week");
+
+						whereClause = X_BAY_RoutePlan.COLUMNNAME_BAY_PostalText + "=? AND AD_Client_ID=? ";
+						routePlan = new Query(ctx, X_BAY_RoutePlan.Table_Name, whereClause, null)
+								.setParameters(new Object[]{location.getPostal(), Env.getAD_Client_ID(ctx)})
+								.setOrderBy(X_BAY_RoutePlan.COLUMNNAME_WeekDay)
+								.first();
+						if (routePlan != null) {
+							X_BAY_Route route = new X_BAY_Route(ctx, routePlan.getBAY_Route_ID(),null);
+							bpartnerRouteId = route.getBAY_Route_ID();
+						}
 					}
 				}
 			}

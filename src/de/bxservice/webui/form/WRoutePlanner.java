@@ -117,9 +117,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		lDate.setText(Msg.translate(Env.getCtx(), "Date"));
 		lDate.setStyle("padding-right: 15px; padding-left: 15px;");
 		dateField = new WDateEditor("Date", false, false, true, Msg.getMsg(Env.getCtx(), "Date"));
+		dateField.setValue(routeDate);		
+		
 		dateField.addValueChangeListener(this);
-
-		dateField.setValue(routeDate);
 		dateField.getComponent().setStyle("text-align: right; padding-right: 15px;");
 
 		bRefresh.setId(REFRESH_BUTTON);
@@ -333,12 +333,9 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 		//Left side - labels
 		Label label = new Label(resource.getName());
 		vlayout.appendChild(label);
-		//label.setVflex("1");
 		label = new Label(labelText);
-		//label.setVflex("1");
 		vlayout.appendChild(label);
 		vlayout.setHflex("1");
-		//vlayout.setVflex("1");
 		
 		// Right panel - image
 		Image imageDiv = new Image();
@@ -373,8 +370,7 @@ implements IFormController, EventListener<Event>, ValueChangeListener {
 				imageDiv.setContent(aImage);
 			} catch (IOException e) {
 				e.printStackTrace();
-			}			
-			//imageDiv.setSrc(getClass().getClassLoader().getResource("images/delivery-man.png").toString());
+			}
 		}
 		imageDiv.setWidth("75px");
 		imageDiv.setHeight("75px");
